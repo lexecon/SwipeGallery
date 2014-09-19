@@ -1,4 +1,4 @@
-return function(options){
+window.SwipeGallery = function(options){
     this.options = $.extend({
         selector:$(''),
         onChange: function(){},
