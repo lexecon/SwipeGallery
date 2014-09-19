@@ -1,0 +1,26 @@
+{
+  "name": "SwipeGallery",
+  "version": "0.0.1",
+  "homepage": "https://github.com/lexecon/SwipeGallery",
+  "authors": [
+    "Alexey Krylov <alexey.krylov@saltpepper.ru>"
+  ],
+  "description": "Swipe Gallery",
+  "main": "SwipeGalery.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "javascript",
+    "Hammer",
+    "swipegallery"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
