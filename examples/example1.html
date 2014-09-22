@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Example 1</title>
+    <style>
+        html, body{
+            margin:0;
+            padding:0;
+            width:100%;
+            height:100%;
+        }
+        #gallery{
+            width: 100%;
+            height:100%;
+            overflow:hidden;
+        }
+        #gallery ul{
+            position:relative;
+            height:100%;
+            margin:0;
+            padding:0;
+        }
+        #gallery ul.animate{
+            -webkit-transition: -webkit-transform 0.5s ease;
+            -moz-transition: -moz-transform 0.5s ease;
+            -o-transition: -o-transform 0.5s ease;
+            transition: transform 0.5s ease;
+        }
+        #gallery ul li{
+            overflow:hidden;
+            width:100%;
+            height:100%;
+            float:left;
+        }
+        .controls_overflow{
+            position:absolute;
+            bottom:60px;
+            width:100%;
+            height:40px;
+        }
+        .controls{
+            position:relative;
+            display: table;
+            margin:0 auto;
+        }
+        .control{
+            width:40px;
+            height:40px;
+            float:left;
+            border-radius: 20px;
+            background: white;
+            margin:0 20px;
+        }
+        .control.active{
+            background: deeppink;
+        }
+    </style>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="../src/SwipeGallery.js"></script>
+    <script>
+        $(function(){
+            window.Gallery = new SwipeGallery({selector: $('#gallery')})
+        })
+    </script>
+</head>
+<body>
+    <div id="gallery">
+        <ul>
+            <li style="background-color: darkgreen"></li>
+            <li style="background-color: red"></li>
+            <li style="background-color: royalblue"></li>
+            <li style="background-color: gold"></li>
+            <li style="background-color: grey"></li>
+        </ul>
+    </div>
+</body>
+</html>
