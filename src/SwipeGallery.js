@@ -1,4 +1,4 @@
-/*! Hammer.JS - v1.0.10 - 2014-03-28
+/*! Hammer.JS - v1.0.11 - 2014-05-20
  * http://eightmedia.github.io/hammer.js
  *
  * Copyright (c) 2014 Jorik Tangelder <j.tangelder@gmail.com>;
@@ -19,7 +19,7 @@
     return new Hammer.Instance(element, options || {});
   };
 
-  Hammer.VERSION = '1.0.10';
+  Hammer.VERSION = '1.0.11';
 
 // default settings
   Hammer.defaults = {
@@ -30,9 +30,10 @@
     stop_browser_behavior: {
       // this also triggers onselectstart=false for IE
       userSelect       : 'none',
-      // this makes the element blocking in IE10>, you could experiment with the value
-      // see for more options this issue; https://github.com/EightMedia/hammer.js/issues/241
-      touchAction      : 'none',
+      // this makes the element blocking in IE10> and Chrome 35>, you could experiment with the value
+      // see for more options the wiki: https://github.com/EightMedia/hammer.js/wiki
+      touchAction      : 'pan-y',
+
       touchCallout     : 'none',
       contentZooming   : 'none',
       userDrag         : 'none',
@@ -113,6 +114,7 @@
     // Hammer is ready...!
     Hammer.READY = true;
   }
+
 
   var Utils = Hammer.utils = {
     /**
@@ -1526,10 +1528,7 @@
       }
     }
   };
-
-
-    window.SwipeGalleryHammer = Hammer;
-
+  window.SwipeGalleryHammer = Hammer
 
 })(window);
 
@@ -1565,7 +1564,7 @@ window.SwipeGallery = function (options) {
 
     this.update();
     if (this.options.events)
-      new SwipeGalleryHammer(this.container.get(0), { drag_lock_to_axis: true }).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
+      new SwipeGalleryHammer(this.gallery[0], { drag_lock_to_axis: true}).on("release dragleft dragup dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
 
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
@@ -1616,6 +1615,9 @@ window.SwipeGallery.prototype.handleHammer = function (ev) {
     case 'dragright':
     case 'dragleft':
       this.slidersMove(this.currentLeft + ev.gesture.deltaX);
+      break;
+    case 'dragup':
+      console.log(ev.gesture.deltaY)
       break;
 
     case 'swipeleft':
@@ -1691,8 +1693,8 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
   var index = Math.max(0, Math.min(index, this.galerySize-1));
   if (this.currentActive != index)
     this.currentActive = index;
-    this.options.onChange(index, this.galerySize-1);
-    this.updateArrow();
+  this.options.onChange(index, this.galerySize-1);
+  this.updateArrow();
   this.controlItems.removeClass('active');
   this.controlItems.eq(this.currentActive).addClass('active');
   this.currentLeft = 0 - this.galleryWidth*this.currentActive;
