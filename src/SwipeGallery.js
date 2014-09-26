@@ -1552,9 +1552,9 @@ window.SwipeGallery = function (options) {
     this.galleryWidth = this.gallery.width();
     this.galleryItems = $(">ul>li", this.container);
     this.appendControls();
-    this.arrowLeft = $('.arrow_left', this.container);
-    this.arrowRight = $('.arrow_right', this.container);
-    this.controlsContainer = $('.controls_overflow .controls', this.container);
+    this.arrowLeft = $('>.arrow_left', this.container);
+    this.arrowRight = $('>.arrow_right', this.container);
+    this.controlsContainer = $('>.controls_overflow .controls', this.container);
     this.currentActive = this.options.activeSlide;
     this.currentLeft = 0;
     this.controlItems = null;
