@@ -1564,7 +1564,7 @@ window.SwipeGallery = function (options) {
 
     this.update();
     if (this.options.events)
-      new SwipeGalleryHammer(this.gallery[0], { drag_lock_to_axis: true}).on("release dragleft dragup dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
+      new SwipeGalleryHammer(this.gallery[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
 
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
@@ -1615,9 +1615,6 @@ window.SwipeGallery.prototype.handleHammer = function (ev) {
     case 'dragright':
     case 'dragleft':
       this.slidersMove(this.currentLeft + ev.gesture.deltaX);
-      break;
-    case 'dragup':
-      console.log(ev.gesture.deltaY)
       break;
 
     case 'swipeleft':
