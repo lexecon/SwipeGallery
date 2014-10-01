@@ -1607,6 +1607,13 @@ window.SwipeGallery.prototype.updateArrow = function(){
   }else{
     this.arrowRight.removeClass('disable')
   }
+  if (this.galerySize <= 1){
+    this.arrowLeft.addClass('hide')
+    this.arrowRight.addClass('hide')
+  }else{
+    this.arrowLeft.removeClass('hide')
+    this.arrowRight.removeClass('hide')
+  }
 }
 window.SwipeGallery.prototype.handleHammer = function (ev) {
   ev.gesture.preventDefault();
