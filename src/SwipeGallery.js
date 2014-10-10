@@ -1536,10 +1536,13 @@ window.SwipeGallery = function (options) {
   this.options = $.extend({
     selector: null, //Селектор на блок, в котором находится список
     activeSlide: 0,// Активный слайд
+    transition: true,
+    transitionTime: '.3s',
+    transitionFunc: 'ease',
+    loop:false,
     getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
       return ''
     },
-    mouseEvent: true,
     onChange: function () {
     },
 
@@ -1559,13 +1562,19 @@ window.SwipeGallery = function (options) {
     this.currentLeft = 0;
     this.controlItems = null;
     this.galerySize = 0;
+    this.timmerAnimate = null;
+    this.timmerEnd = false;
+    this.preLastInit = false;
 
     this.transform3d = this.has3d();
 
     this.update();
     if (this.options.events)
       new SwipeGalleryHammer(this.gallery[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
+    /*if (this.options.loop){
+     this.gallery.before('<div class="preLast" style="position:absolute; top:0; left:-100%; width:100%; height:100%"></div>')
 
+     }*/
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
   }
@@ -1577,7 +1586,21 @@ window.SwipeGallery.prototype.appendControls = function () {
                          <div class="arrow_left"></div>\
                          <div class="arrow_right"></div>');
 }
+window.SwipeGallery.prototype.endAnimate = function(num){
+  /*if (num == 0){
+   this.gallery.prepend(this.galleryItems.last());
+   this.preLastInit = true;
+   this.showPane(1, false);
+   }else if (this.preLastInit){
+   this.gallery.append(this.galleryItems.first());
+   this.showPane(this.currentActive-1, false);
+   }*/
+  console.log("End slide "+num)
+}
 window.SwipeGallery.prototype.update = function () {
+  this.gallery = $(">ul", this.container);
+  this.galleryWidth = this.gallery.width();
+  this.galleryItems = $(">ul>li", this.container);
   this.controlsContainer.html('');
   this.galerySize = this.galleryItems.size();
   var htmlControls = "";
@@ -1652,13 +1675,15 @@ window.SwipeGallery.prototype.handleHammer = function (ev) {
 window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
 
   if(animate) {
-    this.gallery.addClass("animate");
+//    this.gallery.addClass("animate");
+    this.gallery.css({transition:'transform '+this.options.transitionTime+' '+this.options.transitionFunc})
   }else{
-    this.gallery.removeClass("animate");
+//    this.gallery.removeClass("animate");
+    this.gallery.css({transition:'none'})
   }
   this.gallery.width(); // Для принудительной перерисовки
   if(this.transform3d) {
-    this.gallery.css("transform", "translate3d("+ px +"px,0,0) scale3d(1,1,1)");
+    this.gallery.css("transform", "translate3d("+ px +"px,0,0)");
   }
   else {
     this.gallery.css("left", px+"px");
@@ -1690,10 +1715,25 @@ window.SwipeGallery.prototype.has3d = function has3d() {
   return (has3d !== undefined && has3d.length > 0 && has3d !== "none");
 }
 
-window.SwipeGallery.prototype.next = function() { return this.showPane(this.currentActive+1, true); };
-window.SwipeGallery.prototype.prev = function() { return this.showPane(this.currentActive-1, true); };
-window.SwipeGallery.prototype.goTo = function(num) { return this.showPane(num, true); };
+window.SwipeGallery.prototype.next = function() { return this.goTo(this.currentActive+1); };
+window.SwipeGallery.prototype.prev = function() { return this.goTo(this.currentActive-1); };
+window.SwipeGallery.prototype.goTo = function(num) {
+  this.showPane(num, true);
+  /*if (!this.timmerEnd){
+   this.endAnimate(this.currentActive)
+   clearTimeout(this.timmerAnimate)
+   }
+   this.timmerEnd = false;
+   this.timmerAnimate = window.setTimeout($.proxy(function(){
+   this.endAnimate(this.currentActive)
+   this.timmerEnd = true;
+   }, this), 300)*/
+
+};
 window.SwipeGallery.prototype.showPane = function(index, animate) {
+
+
+
   var index = Math.max(0, Math.min(index, this.galerySize-1));
   if (this.currentActive != index)
     this.currentActive = index;
@@ -1703,4 +1743,7 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
   this.controlItems.eq(this.currentActive).addClass('active');
   this.currentLeft = 0 - this.galleryWidth*this.currentActive;
   this.slidersMove(this.currentLeft, animate);
+
+
+
 };
