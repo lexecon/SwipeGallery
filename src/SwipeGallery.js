@@ -1536,10 +1536,12 @@ window.SwipeGallery = function (options) {
   this.options = $.extend({
     selector: null, //Селектор на блок, в котором находится список
     activeSlide: 0,// Активный слайд
-    transition: true,
-    transitionTime: '.3s',
-    transitionFunc: 'ease',
+    countSwitchingSlides: 1,
+    /*transition: true,
+     transitionTime: '.3s',
+     transitionFunc: 'ease',*/
     loop:false,
+    fullWidthItems: false,
     getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
       return ''
     },
@@ -1551,9 +1553,10 @@ window.SwipeGallery = function (options) {
 
   if (this.options.selector && $(this.options.selector).size() != 0) {
     this.container = $(this.options.selector);
-    this.gallery = $(">ul", this.container);
+    this.containerContent = $(">.ul_overflow", this.container);
+    this.gallery = $(">ul", this.containerContent);
     this.galleryWidth = this.gallery.width();
-    this.galleryItems = $(">ul>li", this.container);
+    this.galleryItems = $(">li", this.gallery);
     this.appendControls();
     this.arrowLeft = $('>.arrow_left', this.container);
     this.arrowRight = $('>.arrow_right', this.container);
@@ -1562,9 +1565,6 @@ window.SwipeGallery = function (options) {
     this.currentLeft = 0;
     this.controlItems = null;
     this.galerySize = 0;
-    this.timmerAnimate = null;
-    this.timmerEnd = false;
-    this.preLastInit = false;
 
     this.transform3d = this.has3d();
 
@@ -1579,6 +1579,26 @@ window.SwipeGallery = function (options) {
     console.log("SwipeGallery: Селектор не может быть пустым")
   }
 }
+window.SwipeGallery.prototype.createItemsMas = function(){
+  var obj = this;
+  obj.itemsMas = []
+  var left = 0;
+  obj.galleryItems.each(function(){
+    obj.itemsMas.push({
+      selector: $(this),
+      width: $(this).width(),
+      left: left
+    })
+    left += $(this).width()
+  })
+}
+window.SwipeGallery.prototype.updateLeftItems = function(){
+  $.each(this.itemsMas, function(num){
+    this.selector.css({left:this.left})
+  })
+
+  this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
+}
 window.SwipeGallery.prototype.appendControls = function () {
   this.container.append('<div class="controls_overflow">\
                             <div class="controls"></div>\
@@ -1586,21 +1606,11 @@ window.SwipeGallery.prototype.appendControls = function () {
                          <div class="arrow_left"></div>\
                          <div class="arrow_right"></div>');
 }
-window.SwipeGallery.prototype.endAnimate = function(num){
-  /*if (num == 0){
-   this.gallery.prepend(this.galleryItems.last());
-   this.preLastInit = true;
-   this.showPane(1, false);
-   }else if (this.preLastInit){
-   this.gallery.append(this.galleryItems.first());
-   this.showPane(this.currentActive-1, false);
-   }*/
-  console.log("End slide "+num)
-}
 window.SwipeGallery.prototype.update = function () {
-  this.gallery = $(">ul", this.container);
-  this.galleryWidth = this.gallery.width();
-  this.galleryItems = $(">ul>li", this.container);
+  this.containerContent = $(">.ul_overflow", this.container);
+  this.gallery = $(">ul", this.containerContent);
+  this.galleryWidth = this.containerContent.width();
+  this.galleryItems = $(">li", this.gallery);
   this.controlsContainer.html('');
   this.galerySize = this.galleryItems.size();
   var htmlControls = "";
@@ -1610,14 +1620,31 @@ window.SwipeGallery.prototype.update = function () {
   this.controlsContainer.append(htmlControls);
   this.controlItems = $('>.control', this.controlsContainer);
   this.controlItems.eq(this.currentActive).addClass('active');
-  this.updateWidth();
+  this.setWithItem()
+  this.createItemsMas();
+  if (this.itemsMas.length>0){
+    this.updateLeftItems();
+    this.showPane(this.currentActive, false)
+  }
+
 }
 window.SwipeGallery.prototype.updateWidth = function () {
-  this.galleryWidth = this.container.width();
-  this.galleryItems.width(this.galleryWidth);
-  this.gallery.width(this.galleryWidth * this.galerySize);
-  this.currentLeft = 0 - this.currentActive*this.galleryWidth;
-  this.showPane(this.currentActive, false)
+  this.setWithItem()
+  if (this.options.fullWidthItems){
+    this.createItemsMas();
+    this.updateLeftItems();
+  }
+  if (this.itemsMas.length!=0)
+    this.showPane(this.currentActive, false)
+}
+
+window.SwipeGallery.prototype.setWithItem = function(){
+  this.galleryWidth = this.containerContent.width();
+  if (this.options.fullWidthItems){
+    this.galleryItems.width(this.galleryWidth);
+    this.gallery.width(this.galleryWidth * this.galerySize);
+    this.currentLeft = 0 - this.currentActive*this.galleryWidth;
+  }
 }
 window.SwipeGallery.prototype.updateArrow = function(){
   if (this.currentActive == 0){
@@ -1625,12 +1652,12 @@ window.SwipeGallery.prototype.updateArrow = function(){
   }else{
     this.arrowLeft.removeClass('disable')
   }
-  if (this.currentActive == this.galerySize -1){
+  if (this.currentActive >= this.galerySize -this.options.countSwitchingSlides){
     this.arrowRight.addClass('disable')
   }else{
     this.arrowRight.removeClass('disable')
   }
-  if (this.galerySize <= 1){
+  if (this.galerySize <= this.options.countSwitchingSlides){
     this.arrowLeft.addClass('hide')
     this.arrowRight.addClass('hide')
   }else{
@@ -1658,28 +1685,100 @@ window.SwipeGallery.prototype.handleHammer = function (ev) {
       break;
 
     case 'release':
-      // more then 25% moved, navigate
-      if(Math.abs(ev.gesture.deltaX) > this.galleryWidth/4) {
-        if(ev.gesture.direction == 'right') {
-          this.prev();
-        } else {
-          this.next();
-        }
-      }
-      else {
-        this.showPane(this.currentActive, true);
-      }
+      this.showPane(this.detectActiveSlide(ev.gesture.deltaX), true);
       break;
   }
 }
-window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
 
-  if(animate) {
-//    this.gallery.addClass("animate");
-    this.gallery.css({transition:'transform '+this.options.transitionTime+' '+this.options.transitionFunc})
+window.SwipeGallery.prototype.detectActiveSlide = function(deltaX){
+  if (deltaX<0){
+    deltaX = Math.abs(deltaX);
+    var active = this.currentActive;
+    var ostDelta = deltaX- this.itemsMas[active].width;
+    while (ostDelta>0){
+      active++;
+      if (!this.itemsMas[active]){
+        return active-1;
+      }
+      ostDelta -= this.itemsMas[active].width;
+    }
+    if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
+      active++
+    return active;
   }else{
-//    this.gallery.removeClass("animate");
-    this.gallery.css({transition:'none'})
+    if (this.currentActive != 0){
+      var active = this.currentActive-1;
+      var ostDelta = deltaX- this.itemsMas[active].width;
+      while (ostDelta>0){
+        active--;
+        if (active <= 0){
+          return 0
+        }
+        ostDelta -= this.itemsMas[active].width;
+      }
+      if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
+        active++
+      return active;
+    }else{
+      return 0;
+    }
+
+  }
+}
+
+
+window.SwipeGallery.prototype.next = function() { return this.goTo(this.currentActive+this.options.countSwitchingSlides); };
+window.SwipeGallery.prototype.prev = function() { return this.goTo(this.currentActive-this.options.countSwitchingSlides); };
+window.SwipeGallery.prototype.goTo = function(num) {
+  this.showPane(num, true);
+};
+window.SwipeGallery.prototype.showPane = function(index, animate) {
+
+
+
+  /*var index = Math.max(0, Math.min(index, this.galerySize-1));
+   if (this.currentActive != index)
+   this.currentActive = index;
+   this.options.onChange(index, this.galerySize-1);
+   this.updateArrow();
+   this.controlItems.removeClass('active');
+   this.controlItems.eq(this.currentActive).addClass('active');
+   this.currentLeft = 0 - this.galleryWidth*this.currentActive;
+   this.slidersMove(this.currentLeft, animate);*/
+  var index = Math.max(0, Math.min(index, this.galerySize-1));
+  if (this.currentActive != index){
+    this.options.onChange(index, this.galerySize-1);
+  }
+  this.currentActive = index;
+  this.updateArrow();
+  this.controlItems.removeClass('active');
+  this.controlItems.eq(this.currentActive).addClass('active');
+  this.currentLeft= 0 - this.itemsMas[index].left;
+  if (this.currentLeft != 0 && this.currentLeft< this.maxLeft){
+    this.currentLeft= this.maxLeft
+  }
+
+  this.slidersMove(this.currentLeft, animate);
+
+
+
+};
+
+
+
+
+
+
+window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
+  if(animate) {
+    this.gallery.addClass("animate");
+//    this.gallery.css({'-webkit-transition':'-webkit-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
+//                      '-o-transition':'-o-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
+//                      '-moz-transition':'-moz-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
+//                      'transition':'transform '+this.options.transitionTime+' '+this.options.transitionFunc})
+  }else{
+    this.gallery.removeClass("animate");
+//    this.gallery.css({transition:'none'})
   }
   this.gallery.width(); // Для принудительной перерисовки
   if(this.transform3d) {
@@ -1689,6 +1788,7 @@ window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Пере�
     this.gallery.css("left", px+"px");
   }
 }
+
 window.SwipeGallery.prototype.has3d = function has3d() {
   var el = document.createElement('p'),
     has3d,
@@ -1714,36 +1814,3 @@ window.SwipeGallery.prototype.has3d = function has3d() {
 
   return (has3d !== undefined && has3d.length > 0 && has3d !== "none");
 }
-
-window.SwipeGallery.prototype.next = function() { return this.goTo(this.currentActive+1); };
-window.SwipeGallery.prototype.prev = function() { return this.goTo(this.currentActive-1); };
-window.SwipeGallery.prototype.goTo = function(num) {
-  this.showPane(num, true);
-  /*if (!this.timmerEnd){
-   this.endAnimate(this.currentActive)
-   clearTimeout(this.timmerAnimate)
-   }
-   this.timmerEnd = false;
-   this.timmerAnimate = window.setTimeout($.proxy(function(){
-   this.endAnimate(this.currentActive)
-   this.timmerEnd = true;
-   }, this), 300)*/
-
-};
-window.SwipeGallery.prototype.showPane = function(index, animate) {
-
-
-
-  var index = Math.max(0, Math.min(index, this.galerySize-1));
-  if (this.currentActive != index)
-    this.currentActive = index;
-  this.options.onChange(index, this.galerySize-1);
-  this.updateArrow();
-  this.controlItems.removeClass('active');
-  this.controlItems.eq(this.currentActive).addClass('active');
-  this.currentLeft = 0 - this.galleryWidth*this.currentActive;
-  this.slidersMove(this.currentLeft, animate);
-
-
-
-};
