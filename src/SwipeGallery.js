@@ -395,7 +395,7 @@
     // merge options
     this.options = Utils.extend(
       Utils.extend({}, Hammer.defaults),
-        options || {});
+      options || {});
 
     // add some css to the element to prevent the browser from doing its native behavoir
     if(this.options.stop_browser_behavior) {
@@ -596,7 +596,7 @@
         else if(Utils.inStr(srcEventType, 'touch') ||   // touch events are always on screen
           Utils.inStr(srcEventType, 'pointerdown') || // pointerevents touch
           (Utils.inStr(srcEventType, 'mouse') && ev.which === 1)   // mouse is pressed
-          ) {
+        ) {
           should_detect = true;
         }
 
@@ -978,8 +978,8 @@
       // calculate velocity every x ms
       if (velocityEv && ev.timeStamp - velocityEv.timeStamp > Hammer.UPDATE_VELOCITY_INTERVAL) {
         velocity = Utils.getVelocity(ev.timeStamp - velocityEv.timeStamp,
-            ev.center.clientX - velocityEv.center.clientX,
-            ev.center.clientY - velocityEv.center.clientY);
+          ev.center.clientX - velocityEv.center.clientX,
+          ev.center.clientY - velocityEv.center.clientY);
         cur.lastVelocityEvent = ev;
       }
       else if(!cur.velocity) {
@@ -1192,8 +1192,8 @@
           // lock drag to axis?
           if(cur.lastEvent.drag_locked_to_axis ||
             ( inst.options.drag_lock_to_axis &&
-              inst.options.drag_lock_min_distance <= ev.distance
-              )) {
+            inst.options.drag_lock_min_distance <= ev.distance
+            )) {
             ev.drag_locked_to_axis = true;
           }
           var last_direction = cur.lastEvent.direction;
@@ -1593,11 +1593,17 @@ window.SwipeGallery.prototype.createItemsMas = function(){
   })
 }
 window.SwipeGallery.prototype.updateLeftItems = function(){
+  var commonWidth = 0;
   $.each(this.itemsMas, function(num){
     this.selector.css({left:this.left})
+    commonWidth += this.width
   })
+  if (this.galleryWidth>commonWidth){
+    this.maxLeft = this.galleryWidth/2 - commonWidth/2
+  }else{
+    this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
+  }
 
-  this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
 }
 window.SwipeGallery.prototype.appendControls = function () {
   this.container.append('<div class="controls_overflow">\
@@ -1754,7 +1760,7 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
   this.controlItems.removeClass('active');
   this.controlItems.eq(this.currentActive).addClass('active');
   this.currentLeft= 0 - this.itemsMas[index].left;
-  if (this.currentLeft != 0 && this.currentLeft< this.maxLeft){
+  if (this.currentLeft< this.maxLeft){
     this.currentLeft= this.maxLeft
   }
 
