@@ -15,6 +15,11 @@
             height:100%;
             overflow:hidden;
         }
+        .ul_overflow{
+            position:relative;
+            width:100%;
+            height:100%;
+        }
         #gallery ul{
             position:relative;
             height:100%;
@@ -55,24 +60,45 @@
         .control.active{
             background: deeppink;
         }
+        .addLeft{
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            font-family: Arial;
+            padding: 10px;
+            cursor: pointer;
+        }
     </style>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="../src/SwipeGallery.js"></script>
     <script>
         $(function(){
             window.Gallery = new SwipeGallery({selector: $('#gallery')})
+            $('.addLeft').click(function(){
+                $('.ul_overflow ul').prepend('<li style="background-color:pink; width: 400px"></li>')
+                window.Gallery.update()
+            })
+            $('.control').click(function(){
+                window.Gallery.goTo($(this).index())
+            })
         })
     </script>
 </head>
 <body>
+
 <div id="gallery">
-    <ul>
-        <li style="background-color: darkgreen; width:300px;"></li>
-        <li style="background-color: red; width:250px;"></li>
-        <li style="background-color: royalblue; width:400px;"></li>
-        <li style="background-color: gold; width:500px;"></li>
-        <li style="background-color: grey; width: 580px;"></li>
-    </ul>
+    <div class="ul_overflow">
+        <ul>
+            <li style="background-color: darkgreen; width:300px;"></li>
+            <li style="background-color: red; width:250px;"></li>
+            <li style="background-color: royalblue; width:400px;"></li>
+            <li style="background-color: gold; width:500px;"></li>
+            <li style="background-color: grey; width: 580px;"></li>
+        </ul>
+    </div>
+
 </div>
+<div class="addLeft">Добавить элемент слева</div>
 </body>
 </html>

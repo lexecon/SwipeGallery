@@ -15,6 +15,11 @@
             height:100%;
             overflow:hidden;
         }
+        .ul_overflow{
+            position:relative;
+            width:100%;
+            height:100%;
+        }
         #gallery ul{
             position:relative;
             height:100%;
@@ -66,13 +71,15 @@
 </head>
 <body>
     <div id="gallery">
-        <ul>
-            <li style="background-color: darkgreen"></li>
-            <li style="background-color: red"></li>
-            <li style="background-color: royalblue"></li>
-            <li style="background-color: gold"></li>
-            <li style="background-color: grey"></li>
-        </ul>
+        <div class="ul_overflow">
+            <ul>
+                <li style="background-color: darkgreen"></li>
+                <li style="background-color: red"></li>
+                <li style="background-color: royalblue"></li>
+                <li style="background-color: gold"></li>
+                <li style="background-color: grey"></li>
+            </ul>
+        </div>
     </div>
 </body>
 </html>

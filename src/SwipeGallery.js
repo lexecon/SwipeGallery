@@ -395,7 +395,7 @@
     // merge options
     this.options = Utils.extend(
       Utils.extend({}, Hammer.defaults),
-        options || {});
+      options || {});
 
     // add some css to the element to prevent the browser from doing its native behavoir
     if(this.options.stop_browser_behavior) {
@@ -596,7 +596,7 @@
         else if(Utils.inStr(srcEventType, 'touch') ||   // touch events are always on screen
           Utils.inStr(srcEventType, 'pointerdown') || // pointerevents touch
           (Utils.inStr(srcEventType, 'mouse') && ev.which === 1)   // mouse is pressed
-          ) {
+        ) {
           should_detect = true;
         }
 
@@ -978,8 +978,8 @@
       // calculate velocity every x ms
       if (velocityEv && ev.timeStamp - velocityEv.timeStamp > Hammer.UPDATE_VELOCITY_INTERVAL) {
         velocity = Utils.getVelocity(ev.timeStamp - velocityEv.timeStamp,
-            ev.center.clientX - velocityEv.center.clientX,
-            ev.center.clientY - velocityEv.center.clientY);
+          ev.center.clientX - velocityEv.center.clientX,
+          ev.center.clientY - velocityEv.center.clientY);
         cur.lastVelocityEvent = ev;
       }
       else if(!cur.velocity) {
@@ -1192,8 +1192,8 @@
           // lock drag to axis?
           if(cur.lastEvent.drag_locked_to_axis ||
             ( inst.options.drag_lock_to_axis &&
-              inst.options.drag_lock_min_distance <= ev.distance
-              )) {
+            inst.options.drag_lock_min_distance <= ev.distance
+            )) {
             ev.drag_locked_to_axis = true;
           }
           var last_direction = cur.lastEvent.direction;
@@ -1533,6 +1533,14 @@
 })(window);
 
 window.SwipeGallery = function (options) {
+  var vendors = ['ms', 'moz', 'webkit', 'o'];
+  for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+    || window[vendors[x]+'CancelRequestAnimationFrame'];
+  }
+
+
   this.options = $.extend({
     selector: null, //Селектор на блок, в котором находится список
     activeSlide: 0,// Активный слайд
@@ -1550,6 +1558,7 @@ window.SwipeGallery = function (options) {
 
     events: true //Навешивать ли события драга
   }, options);
+  this.requestAnimationID = 1;
 
   if (this.options.selector && $(this.options.selector).size() != 0) {
     this.container = $(this.options.selector);
@@ -1777,15 +1786,30 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
 window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
   if(animate) {
     this.gallery.addClass("animate");
-//    this.gallery.css({'-webkit-transition':'-webkit-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
-//                      '-o-transition':'-o-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
-//                      '-moz-transition':'-moz-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
-//                      'transition':'transform '+this.options.transitionTime+' '+this.options.transitionFunc})
+    if (window.requestAnimationFrame){
+      window.cancelAnimationFrame(this.requestAnimationID)
+    }
+
+    this.gallery.width(); // Для принудительной перерисовки
+    this.setLeft(px);
+
   }else{
     this.gallery.removeClass("animate");
-//    this.gallery.css({transition:'none'})
+    this.gallery.width();
+    // Через реквест аниматион фрейм
+    if (!window.requestAnimationFrame){
+      this.setLeft(px);
+    }else{
+      this.requestAnimationID = window.requestAnimationFrame($.proxy(function(){
+        this.setLeft(px);
+      }, this))
+    }
+
   }
-  this.gallery.width(); // Для принудительной перерисовки
+
+}
+
+window.SwipeGallery.prototype.setLeft = function(px){
   if(this.transform3d) {
     this.gallery.css("transform", "translate3d("+ px +"px,0,0)");
   }
