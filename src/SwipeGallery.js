@@ -1533,14 +1533,6 @@
 })(window);
 
 window.SwipeGallery = function (options) {
-  var vendors = ['ms', 'moz', 'webkit', 'o'];
-  for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
-    || window[vendors[x]+'CancelRequestAnimationFrame'];
-  }
-
-
   this.options = $.extend({
     selector: null, //Селектор на блок, в котором находится список
     activeSlide: 0,// Активный слайд
@@ -1558,7 +1550,6 @@ window.SwipeGallery = function (options) {
 
     events: true //Навешивать ли события драга
   }, options);
-  this.requestAnimationID = 1;
 
   if (this.options.selector && $(this.options.selector).size() != 0) {
     this.container = $(this.options.selector);
@@ -1786,30 +1777,15 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
 window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
   if(animate) {
     this.gallery.addClass("animate");
-    if (window.requestAnimationFrame){
-      window.cancelAnimationFrame(this.requestAnimationID)
-    }
-
-    this.gallery.width(); // Для принудительной перерисовки
-    this.setLeft(px);
-
+//    this.gallery.css({'-webkit-transition':'-webkit-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
+//                      '-o-transition':'-o-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
+//                      '-moz-transition':'-moz-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
+//                      'transition':'transform '+this.options.transitionTime+' '+this.options.transitionFunc})
   }else{
     this.gallery.removeClass("animate");
-    this.gallery.width();
-    // Через реквест аниматион фрейм
-    if (!window.requestAnimationFrame){
-      this.setLeft(px);
-    }else{
-      this.requestAnimationID = window.requestAnimationFrame($.proxy(function(){
-        this.setLeft(px);
-      }, this))
-    }
-
+//    this.gallery.css({transition:'none'})
   }
-
-}
-
-window.SwipeGallery.prototype.setLeft = function(px){
+  this.gallery.width(); // Для принудительной перерисовки
   if(this.transform3d) {
     this.gallery.css("transform", "translate3d("+ px +"px,0,0)");
   }
