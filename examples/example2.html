@@ -74,7 +74,7 @@
     <script src="../src/SwipeGallery.js"></script>
     <script>
         $(function(){
-            window.Gallery = new SwipeGallery({selector: $('#gallery')})
+            window.Gallery = new SwipeGallery({selector: $('#gallery'), loop: true, elementsOnSide: 2})
             $('.addLeft').click(function(){
                 $('.ul_overflow ul').prepend('<li style="background-color:pink; width: 400px"></li>')
                 window.Gallery.update()

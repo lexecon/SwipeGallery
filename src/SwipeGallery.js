@@ -1537,25 +1537,24 @@ window.SwipeGallery = function (options) {
     selector: null, //Селектор на блок, в котором находится список
     activeSlide: 0,// Активный слайд
     countSwitchingSlides: 1,
-    /*transition: true,
-     transitionTime: '.3s',
-     transitionFunc: 'ease',*/
     loop:false,
-    fullWidthItems: false,
+    elementsOnSide: 1,
     getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
       return ''
     },
     onChange: function () {
     },
-
     events: true //Навешивать ли события драга
   }, options);
 
   if (this.options.selector && $(this.options.selector).size() != 0) {
+/*    if (this.options.fullWidthItems){
+      this.options.elementsOnSide = 1;
+    }*/
     this.container = $(this.options.selector);
     this.containerContent = $(">.ul_overflow", this.container);
     this.gallery = $(">ul", this.containerContent);
-    this.galleryWidth = this.gallery.width();
+    /*this.galleryWidth = this.gallery.width();*/
     this.galleryItems = $(">li", this.gallery);
     this.appendControls();
     this.arrowLeft = $('>.arrow_left', this.container);
@@ -1567,6 +1566,7 @@ window.SwipeGallery = function (options) {
     this.galerySize = 0;
 
     this.transform3d = this.has3d();
+    this.showLoop = this.options.loop;
 
     this.update();
     if (this.options.events)
@@ -1583,8 +1583,9 @@ window.SwipeGallery.prototype.createItemsMas = function(){
   var obj = this;
   obj.itemsMas = []
   var left = 0;
-  obj.galleryItems.each(function(){
+  obj.galleryItems.each(function(num){
     obj.itemsMas.push({
+      index: num,
       selector: $(this),
       width: $(this).width(),
       left: left
@@ -1592,17 +1593,25 @@ window.SwipeGallery.prototype.createItemsMas = function(){
     left += $(this).width()
   })
 }
-window.SwipeGallery.prototype.updateLeftItems = function(){
+window.SwipeGallery.prototype.updateWidthGallery = function(){
   var commonWidth = 0;
   $.each(this.itemsMas, function(num){
     this.selector.css({left:this.left})
     commonWidth += this.width
   })
-  if (this.galleryWidth>commonWidth){
-    this.maxLeft = this.galleryWidth/2 - commonWidth/2
+  var galleryWidth = this.containerContent.width();
+  if (galleryWidth>=commonWidth){
+    this.centerLeft = galleryWidth/2 - commonWidth/2
   }else{
-    this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
+    this.centerLeft = 0;
   }
+  this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - galleryWidth + this.itemsMas[this.itemsMas.length-1].width);
+
+}
+
+window.SwipeGallery.prototype.updateControllState = function(){
+  this.controlItems.removeClass('active');
+  this.controlItems.eq(this.itemsMas[this.currentActive].index).addClass('active');
 
 }
 window.SwipeGallery.prototype.appendControls = function () {
@@ -1612,11 +1621,11 @@ window.SwipeGallery.prototype.appendControls = function () {
                          <div class="arrow_left"></div>\
                          <div class="arrow_right"></div>');
 }
-window.SwipeGallery.prototype.update = function () {
+window.SwipeGallery.prototype.update = function (silent) {
   this.containerContent = $(">.ul_overflow", this.container);
   this.gallery = $(">ul", this.containerContent);
-  this.galleryWidth = this.containerContent.width();
   this.galleryItems = $(">li", this.gallery);
+  this.createItemsMas();
   this.controlsContainer.html('');
   this.galerySize = this.galleryItems.size();
   var htmlControls = "";
@@ -1625,33 +1634,43 @@ window.SwipeGallery.prototype.update = function () {
   }
   this.controlsContainer.append(htmlControls);
   this.controlItems = $('>.control', this.controlsContainer);
-  this.controlItems.eq(this.currentActive).addClass('active');
-  this.setWithItem()
-  this.createItemsMas();
+
+  if (this.options.loop && this.galerySize>= (this.options.elementsOnSide*2+1)){
+    this.showLoop = true;
+  }else {
+    this.showLoop = false;
+  }
+
   if (this.itemsMas.length>0){
-    this.updateLeftItems();
-    this.showPane(this.currentActive, false)
+    this.updateControllState();
+    this.updateWidthGallery();
+    if (!silent){
+      this.showPane(this.currentActive, false);
+    }else{
+      this.updateArrow();
+    }
+
   }
 
 }
-window.SwipeGallery.prototype.updateWidth = function () {
+/*window.SwipeGallery.prototype.updateWidth = function () {
   this.setWithItem()
   if (this.options.fullWidthItems){
     this.createItemsMas();
-    this.updateLeftItems();
+    this.updateWidthGallery();
   }
   if (this.itemsMas.length!=0)
     this.showPane(this.currentActive, false)
-}
+}*/
 
-window.SwipeGallery.prototype.setWithItem = function(){
+/*window.SwipeGallery.prototype.setWithItem = function(){
   this.galleryWidth = this.containerContent.width();
   if (this.options.fullWidthItems){
     this.galleryItems.width(this.galleryWidth);
     this.gallery.width(this.galleryWidth * this.galerySize);
     this.currentLeft = 0 - this.currentActive*this.galleryWidth;
   }
-}
+}*/
 window.SwipeGallery.prototype.updateArrow = function(){
   if (this.currentActive == 0){
     this.arrowLeft.addClass('disable')
@@ -1732,6 +1751,28 @@ window.SwipeGallery.prototype.detectActiveSlide = function(deltaX){
   }
 }
 
+window.SwipeGallery.prototype.elementMoveLeft = function(){
+  var lastElement = this.itemsMas.pop();
+  lastElement.left = this.itemsMas[0].left - lastElement.width
+  this.itemsMas.unshift(lastElement);
+  this.currentActive++;
+  this.setLeft(0);
+}
+
+window.SwipeGallery.prototype.elementMoveRight = function(){
+  var firstElement = this.itemsMas.shift();
+  firstElement.left = this.itemsMas[this.galerySize-2].left + this.itemsMas[this.galerySize-2].width;
+  this.itemsMas.push(firstElement);
+  this.currentActive--;
+  this.setLeft(this.galerySize-1);
+}
+
+window.SwipeGallery.prototype.setLeft = function(num){
+  var element = this.itemsMas[num]
+  if (element){
+    element.selector.css({left:element.left+'px'})
+  }
+}
 
 window.SwipeGallery.prototype.next = function() { return this.goTo(this.currentActive+this.options.countSwitchingSlides); };
 window.SwipeGallery.prototype.prev = function() { return this.goTo(this.currentActive-this.options.countSwitchingSlides); };
@@ -1739,51 +1780,49 @@ window.SwipeGallery.prototype.goTo = function(num) {
   this.showPane(num, true);
 };
 window.SwipeGallery.prototype.showPane = function(index, animate) {
-
-
-
-  /*var index = Math.max(0, Math.min(index, this.galerySize-1));
-   if (this.currentActive != index)
-   this.currentActive = index;
-   this.options.onChange(index, this.galerySize-1);
-   this.updateArrow();
-   this.controlItems.removeClass('active');
-   this.controlItems.eq(this.currentActive).addClass('active');
-   this.currentLeft = 0 - this.galleryWidth*this.currentActive;
-   this.slidersMove(this.currentLeft, animate);*/
   var index = Math.max(0, Math.min(index, this.galerySize-1));
   if (this.currentActive != index){
     this.options.onChange(index, this.galerySize-1);
   }
   this.currentActive = index;
-  this.updateArrow();
-  this.controlItems.removeClass('active');
-  this.controlItems.eq(this.currentActive).addClass('active');
+
+  this.updateControllState()
   this.currentLeft= 0 - this.itemsMas[index].left;
-  if (!this.options.fullWidthItems && this.currentLeft< this.maxLeft){
+  if (this.centerLeft!= 0){
+    this.currentLeft= this.centerLeft
+  }else{
+    this.setPositionElement();
+  }
+  this.updateArrow();
+  if (!this.showLoop && this.currentLeft< this.maxLeft){
     this.currentLeft= this.maxLeft
   }
+  //this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
+
+
   this.slidersMove(this.currentLeft, animate);
-
-
 
 };
 
 
 
-
+window.SwipeGallery.prototype.setPositionElement = function(){
+  if (this.showLoop){
+    for (var i = this.currentActive; i< this.options.elementsOnSide; i++){
+      this.elementMoveLeft()
+    }
+    for (var i = this.currentActive; i> this.galerySize-1-this.options.elementsOnSide; i--){
+      this.elementMoveRight()
+    }
+  }
+}
 
 
 window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
   if(animate) {
     this.gallery.addClass("animate");
-//    this.gallery.css({'-webkit-transition':'-webkit-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
-//                      '-o-transition':'-o-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
-//                      '-moz-transition':'-moz-transform '+this.options.transitionTime+' '+this.options.transitionFunc,
-//                      'transition':'transform '+this.options.transitionTime+' '+this.options.transitionFunc})
   }else{
     this.gallery.removeClass("animate");
-//    this.gallery.css({transition:'none'})
   }
   this.gallery.width(); // Для принудительной перерисовки
   if(this.transform3d) {
