@@ -8,18 +8,20 @@ SwipeGallery
 HTML
 
     <div id="gallery">
-      <ul>
-        <li style="background-color: darkgreen"></li>
-        <li style="background-color: red"></li>
-        <li style="background-color: royalblue"></li>
-        <li style="background-color: gold"></li>
-        <li style="background-color: grey"></li>
-      </ul>
+      <div class="ul_overflow">
+        <ul>
+          <li style="background-color: darkgreen"></li>
+          <li style="background-color: red"></li>
+          <li style="background-color: royalblue"></li>
+          <li style="background-color: gold"></li>
+          <li style="background-color: grey"></li>
+        </ul>
+      </div>
     </div>
     
 CSS
     
-    #gallery{
+    #gallery, .ul_overflow{
         width: 100%;
         height:100%;
         overflow:hidden;
@@ -37,10 +39,10 @@ CSS
         transition: transform 0.5s ease;
     }
     #gallery ul li{
+        position:absolute;
         overflow:hidden;
         width:100%;
         height:100%;
-        float:left;
     }
     
 JS
@@ -50,13 +52,18 @@ JS
     
 Параметры при инициализации:
 
-    selector: null, //Селектор на блок, в котором находится список
-    activeSlide: 0,// Активный слайд при инициализации
-    getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
-      return ''
-    },
-    onChange: function (num, size) { //Обработчик события изменения активного слайда
-    },
-    events: true //Навешивать ли события драга
+        selector: null, //Селектор на блок, в котором находится список
+        activeSlide: 0,// Активный слайд
+        countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие мтрелки
+        loop:false,// включает зацикливание галлереи
+        elementsOnSide: 1,// сколько элементов должно быть по краям от активного (нужно для зацикленной галереи)
+        positionActive: 'auto', //[left, center, right, auto] какую позицию будет занимать активный элемент
+        percentageSwipeElement: 0.3, // Сколько процентов элемента надо проскролить для переключения на него
+        getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
+          return ''
+        },
+        onChange: function () {
+        },
+        events: true //Навешивать ли события драга
 
 

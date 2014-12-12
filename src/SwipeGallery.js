@@ -1536,9 +1536,11 @@ window.SwipeGallery = function (options) {
   this.options = $.extend({
     selector: null, //Селектор на блок, в котором находится список
     activeSlide: 0,// Активный слайд
-    countSwitchingSlides: 1,
-    loop:false,
-    elementsOnSide: 1,
+    countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие мтрелки
+    loop:false,// включает зацикливание галлереи
+    elementsOnSide: 1,// сколько элементов должно быть по краям от активного (нужно для зацикленной галереи)
+    positionActive: 'auto', //[left, center, right, auto] какую позицию будет занимать активный элемент
+    percentageSwipeElement: 0.3, // Сколько процентов элемента надо проскролить для переключения на него
     getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
       return ''
     },
@@ -1551,6 +1553,9 @@ window.SwipeGallery = function (options) {
 /*    if (this.options.fullWidthItems){
       this.options.elementsOnSide = 1;
     }*/
+    if (this.options.positionActive == 'auto' && this.options.loop){
+      this.options.positionActive = 'left'
+    }
     this.container = $(this.options.selector);
     this.containerContent = $(">.ul_overflow", this.container);
     this.gallery = $(">ul", this.containerContent);
@@ -1564,13 +1569,14 @@ window.SwipeGallery = function (options) {
     this.currentLeft = 0;
     this.controlItems = null;
     this.galerySize = 0;
+    this.galleryWidth = 0;
 
     this.transform3d = this.has3d();
     this.showLoop = this.options.loop;
 
     this.update();
     if (this.options.events)
-      new SwipeGalleryHammer(this.gallery[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
+      new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
     /*if (this.options.loop){
      this.gallery.before('<div class="preLast" style="position:absolute; top:0; left:-100%; width:100%; height:100%"></div>')
 
@@ -1599,14 +1605,15 @@ window.SwipeGallery.prototype.updateWidthGallery = function(){
     this.selector.css({left:this.left})
     commonWidth += this.width
   })
-  var galleryWidth = this.containerContent.width();
-  if (galleryWidth>=commonWidth){
-    this.centerLeft = galleryWidth/2 - commonWidth/2
-  }else{
-    this.centerLeft = 0;
+  this.galleryWidth = this.containerContent.width();
+  if (this.options.positionActive === 'auto') {
+    if (this.galleryWidth >= commonWidth) {
+      this.centerLeft = this.galleryWidth / 2 - commonWidth / 2
+    } else {
+      this.centerLeft = 0;
+    }
+    this.maxLeft = 0 - (this.itemsMas[this.itemsMas.length - 1].left - this.galleryWidth + this.itemsMas[this.itemsMas.length - 1].width);
   }
-  this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - galleryWidth + this.itemsMas[this.itemsMas.length-1].width);
-
 }
 
 window.SwipeGallery.prototype.updateControllState = function(){
@@ -1710,13 +1717,26 @@ window.SwipeGallery.prototype.handleHammer = function (ev) {
       break;
 
     case 'release':
-      this.showPane(this.detectActiveSlide(ev.gesture.deltaX), true);
+      this.showPane(this.detectActiveSlideWithPosition(ev.gesture.deltaX, ev.gesture.deltaTime), true);
       break;
   }
 }
 
-window.SwipeGallery.prototype.detectActiveSlide = function(deltaX){
-  if (deltaX<0){
+window.SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, deltaTime){
+  var mn = 1;
+  if (deltaX>0){
+    mn = -1
+  }
+  if (this.options.positionActive === 'center'){
+    return this.detectActiveSlide(deltaX+mn*this.itemsMas[this.currentActive].width/2, deltaTime);
+  }else if (this.options.positionActive === 'right'){
+    return this.detectActiveSlide(deltaX, deltaTime);
+  }else{
+    return this.detectActiveSlide(deltaX, deltaTime);
+  }
+
+
+  /*if (deltaX<0){
     deltaX = Math.abs(deltaX);
     var active = this.currentActive;
     var ostDelta = deltaX- this.itemsMas[active].width;
@@ -1748,6 +1768,29 @@ window.SwipeGallery.prototype.detectActiveSlide = function(deltaX){
       return 0;
     }
 
+  }*/
+}
+window.SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
+  var index = this.currentActive;
+  var widthElements = 0;
+  var fastSwipe = 0;
+  if (deltaTime<300){
+    fastSwipe = 1;
+    console.log('fast')
+  }
+  if (deltaX>0){
+    index--;
+    while (this.itemsMas[index] && (deltaX-this.itemsMas[index].width*this.options.percentageSwipeElement-widthElements)>=0){
+      widthElements += this.itemsMas[index].width;
+      index--;
+    }
+    return index+1-fastSwipe;
+  }else{
+    while (this.itemsMas[index] && (deltaX+this.itemsMas[index].width*this.options.percentageSwipeElement+widthElements)<=0){
+      widthElements += this.itemsMas[index].width;
+      index++;
+    }
+    return index+fastSwipe;
   }
 }
 
@@ -1774,36 +1817,60 @@ window.SwipeGallery.prototype.setLeft = function(num){
   }
 }
 
-window.SwipeGallery.prototype.next = function() { return this.goTo(this.currentActive+this.options.countSwitchingSlides); };
-window.SwipeGallery.prototype.prev = function() { return this.goTo(this.currentActive-this.options.countSwitchingSlides); };
+window.SwipeGallery.prototype.next = function() { return this.showPane(this.currentActive+this.options.countSwitchingSlides, true); };
+window.SwipeGallery.prototype.prev = function() { return this.showPane(this.currentActive-this.options.countSwitchingSlides, true); };
 window.SwipeGallery.prototype.goTo = function(num) {
-  this.showPane(num, true);
+  var index = 0;
+  $.each(this.itemsMas, function(numItem){
+    if (this.index === num){
+      index = numItem;
+      return 0;
+    }
+  })
+  this.showPane(index, true);
 };
 window.SwipeGallery.prototype.showPane = function(index, animate) {
   var index = Math.max(0, Math.min(index, this.galerySize-1));
   if (this.currentActive != index){
     this.options.onChange(index, this.galerySize-1);
+    $('>li.active', this.gallery).removeClass('active');
+    this.itemsMas[index].selector.addClass('active')
   }
   this.currentActive = index;
 
   this.updateControllState()
-  this.currentLeft= 0 - this.itemsMas[index].left;
-  if (this.centerLeft!= 0){
-    this.currentLeft= this.centerLeft
+
+  if (this.options.positionActive === 'auto') {
+    this.currentLeft= 0 - this.itemsMas[index].left;
+    if (this.centerLeft!= 0){
+      this.currentLeft= this.centerLeft
+    }else{
+      this.setPositionElement();
+    }
+    this.updateArrow();
+    if (!this.showLoop && this.currentLeft< this.maxLeft){
+      this.currentLeft= this.maxLeft
+    }
   }else{
+    if (this.options.positionActive === 'left'){
+      this.currentLeft= 0 - this.itemsMas[index].left;
+    }else if (this.options.positionActive === 'center'){
+      this.currentLeft= this.galleryWidth/2 - this.itemsMas[index].left -this.itemsMas[index].width/2
+    }else if (this.options.positionActive === 'right'){
+      this.currentLeft= this.galleryWidth - this.itemsMas[index].width - this.itemsMas[index].left
+    }
     this.setPositionElement();
+    this.updateArrow();
   }
-  this.updateArrow();
-  if (!this.showLoop && this.currentLeft< this.maxLeft){
-    this.currentLeft= this.maxLeft
-  }
+
+
+  /**/
   //this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
 
 
   this.slidersMove(this.currentLeft, animate);
 
 };
-
 
 
 window.SwipeGallery.prototype.setPositionElement = function(){
@@ -1816,7 +1883,6 @@ window.SwipeGallery.prototype.setPositionElement = function(){
     }
   }
 }
-
 
 window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
   if(animate) {

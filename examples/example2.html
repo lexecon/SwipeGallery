@@ -25,6 +25,7 @@
             height:100%;
             margin:0;
             padding:0;
+            will-change: transform;
         }
         #gallery ul.animate{
             -webkit-transition: -webkit-transform 0.5s ease;
@@ -74,7 +75,7 @@
     <script src="../src/SwipeGallery.js"></script>
     <script>
         $(function(){
-            window.Gallery = new SwipeGallery({selector: $('#gallery'), loop: true, elementsOnSide: 2})
+            window.Gallery = new SwipeGallery({selector: $('#gallery'), loop: true, elementsOnSide: 4})
             $('.addLeft').click(function(){
                 $('.ul_overflow ul').prepend('<li style="background-color:pink; width: 400px"></li>')
                 window.Gallery.update()
@@ -91,10 +92,18 @@
     <div class="ul_overflow">
         <ul>
             <li style="background-color: darkgreen; width:300px;"></li>
-            <li style="background-color: red; width:250px;"></li>
+            <li style="background-color: red; width:450px;"></li>
             <li style="background-color: royalblue; width:400px;"></li>
             <li style="background-color: gold; width:500px;"></li>
             <li style="background-color: grey; width: 580px;"></li>
+            <li style="background-color: pink; width: 540px;"></li>
+            <li style="background-color: firebrick; width: 420px;"></li>
+            <li style="background-color: darkcyan; width: 380px;"></li>
+            <li style="background-color: aqua; width: 530px;"></li>
+            <li style="background-color: greenyellow; width: 540px;"></li>
+            <li style="background-color: hotpink; width: 580px;"></li>
+            <li style="background-color: royalblue; width: 510px;"></li>
+            <li style="background-color: lawngreen; width: 430px;"></li>
         </ul>
     </div>
 
