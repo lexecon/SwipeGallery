@@ -1723,6 +1723,9 @@ window.SwipeGallery.prototype.handleHammer = function (ev) {
 }
 
 window.SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, deltaTime){
+  if (deltaX === 0){
+    return this.currentActive;
+  }
   var mn = 1;
   if (deltaX>0){
     mn = -1
