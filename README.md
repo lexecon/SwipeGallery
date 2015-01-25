@@ -67,3 +67,11 @@ JS
         events: true //Навешивать ли события драга
 
 
+bower install swipegallery
+
+
+
+
+Примеры: http://lexecon.github.io/SwipeGallery/
+
+
