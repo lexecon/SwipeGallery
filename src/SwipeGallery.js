@@ -1550,9 +1550,9 @@ window.SwipeGallery = function (options) {
   }, options);
 
   if (this.options.selector && $(this.options.selector).size() != 0) {
-/*    if (this.options.fullWidthItems){
-      this.options.elementsOnSide = 1;
-    }*/
+    /*    if (this.options.fullWidthItems){
+     this.options.elementsOnSide = 1;
+     }*/
     if (this.options.positionActive == 'auto' && this.options.loop){
       this.options.positionActive = 'left'
     }
@@ -1661,23 +1661,23 @@ window.SwipeGallery.prototype.update = function (silent) {
 
 }
 /*window.SwipeGallery.prototype.updateWidth = function () {
-  this.setWithItem()
-  if (this.options.fullWidthItems){
-    this.createItemsMas();
-    this.updateWidthGallery();
-  }
-  if (this.itemsMas.length!=0)
-    this.showPane(this.currentActive, false)
-}*/
+ this.setWithItem()
+ if (this.options.fullWidthItems){
+ this.createItemsMas();
+ this.updateWidthGallery();
+ }
+ if (this.itemsMas.length!=0)
+ this.showPane(this.currentActive, false)
+ }*/
 
 /*window.SwipeGallery.prototype.setWithItem = function(){
-  this.galleryWidth = this.containerContent.width();
-  if (this.options.fullWidthItems){
-    this.galleryItems.width(this.galleryWidth);
-    this.gallery.width(this.galleryWidth * this.galerySize);
-    this.currentLeft = 0 - this.currentActive*this.galleryWidth;
-  }
-}*/
+ this.galleryWidth = this.containerContent.width();
+ if (this.options.fullWidthItems){
+ this.galleryItems.width(this.galleryWidth);
+ this.gallery.width(this.galleryWidth * this.galerySize);
+ this.currentLeft = 0 - this.currentActive*this.galleryWidth;
+ }
+ }*/
 window.SwipeGallery.prototype.updateArrow = function(){
   if (this.currentActive == 0){
     this.arrowLeft.addClass('disable')
@@ -1740,38 +1740,38 @@ window.SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, d
 
 
   /*if (deltaX<0){
-    deltaX = Math.abs(deltaX);
-    var active = this.currentActive;
-    var ostDelta = deltaX- this.itemsMas[active].width;
-    while (ostDelta>0){
-      active++;
-      if (!this.itemsMas[active]){
-        return active-1;
-      }
-      ostDelta -= this.itemsMas[active].width;
-    }
-    if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
-      active++
-    return active;
-  }else{
-    if (this.currentActive != 0){
-      var active = this.currentActive-1;
-      var ostDelta = deltaX- this.itemsMas[active].width;
-      while (ostDelta>0){
-        active--;
-        if (active <= 0){
-          return 0
-        }
-        ostDelta -= this.itemsMas[active].width;
-      }
-      if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
-        active++
-      return active;
-    }else{
-      return 0;
-    }
+   deltaX = Math.abs(deltaX);
+   var active = this.currentActive;
+   var ostDelta = deltaX- this.itemsMas[active].width;
+   while (ostDelta>0){
+   active++;
+   if (!this.itemsMas[active]){
+   return active-1;
+   }
+   ostDelta -= this.itemsMas[active].width;
+   }
+   if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
+   active++
+   return active;
+   }else{
+   if (this.currentActive != 0){
+   var active = this.currentActive-1;
+   var ostDelta = deltaX- this.itemsMas[active].width;
+   while (ostDelta>0){
+   active--;
+   if (active <= 0){
+   return 0
+   }
+   ostDelta -= this.itemsMas[active].width;
+   }
+   if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
+   active++
+   return active;
+   }else{
+   return 0;
+   }
 
-  }*/
+   }*/
 }
 window.SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
   var index = this.currentActive;
@@ -1851,7 +1851,7 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
       this.setPositionElement();
     }
     this.updateArrow();
-    if (!this.showLoop && this.currentLeft< this.maxLeft){
+    if (!this.showLoop && Math.abs(this.currentLeft)> Math.abs(this.maxLeft)){
       this.currentLeft= this.maxLeft
     }
   }else{

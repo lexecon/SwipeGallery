@@ -2,9 +2,184 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title></title>
+    <link rel="stylesheet" href="resource/index.css"/>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/monokai_sublime.min.css">
+    <title>Swipe Gallery</title>
+
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="src/SwipeGallery.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="resource/index.js"></script>
 </head>
 <body>
- <h1>Hello World</h1>
+ <div id="container">
+     <h1>Swipe Gallery</h1>
+     <h3>html</h3>
+     <div class="text_overflow">
+         <pre>
+         <code class="xml html">
+             &lt;div class=&quot;gallery&quot;&gt;
+                 &lt;div class=&quot;ul_overflow&quot;&gt;
+                     &lt;ul&gt;
+                         &lt;li class=&quot;item_1&quot;&gt;&lt;h2&gt;1&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_2&quot;&gt;&lt;h2&gt;2&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_3&quot;&gt;&lt;h2&gt;3&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_4&quot;&gt;&lt;h2&gt;4&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_5&quot;&gt;&lt;h2&gt;5&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_6&quot;&gt;&lt;h2&gt;6&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_7&quot;&gt;&lt;h2&gt;7&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_8&quot;&gt;&lt;h2&gt;8&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_9&quot;&gt;&lt;h2&gt;9&lt;/h2&gt;&lt;/li&gt;
+                         &lt;li class=&quot;item_10&quot;&gt;&lt;h2&gt;10&lt;/h2&gt;&lt;/li&gt;
+                     &lt;/ul&gt;
+                 &lt;/div&gt;
+             &lt;/div&gt;
+         </code>
+     </pre>
+     </div>
+
+     <h3>css</h3>
+     <div class="text_overflow">
+         <pre>
+         <code class="css">
+             .gallery{
+                 width: 100%;
+                 height:100px;
+                 overflow:hidden;
+             }
+             .ul_overflow{
+                 position:relative;
+                 width:90%;
+                 height:100%;
+                 overflow:hidden;
+                 margin:0 auto;
+             }
+             .gallery ul{
+                 position:relative;
+                 height:100%;
+                 width:100%;
+                 margin:0;
+                 padding:0;
+             }
+             .gallery ul.animate{
+                 -webkit-transition: -webkit-transform 0.5s ease;
+                 -moz-transition: -moz-transform 0.5s ease;
+                 -o-transition: -o-transform 0.5s ease;
+                 transition: transform 0.5s ease;
+             }
+             .gallery ul li{
+                 overflow:hidden;
+                 width:100%;
+                 height:100%;
+                 position:absolute;
+             }
+             .gallery ul li h2{
+                 position: absolute;
+                 top:0;
+                 bottom:0;
+                 left:10px;
+                 right:10px;
+                 background: white;
+                 margin:0;
+                 color:cadetblue;
+                 text-align: center;
+                 line-height: 100px;
+             }
+         </code>
+     </pre>
+     </div>
+
+
+     <div class="center_active gallery">
+         <div class="ul_overflow">
+             <ul>
+                 <li class="item_1"><h2>1</h2></li>
+                 <li class="item_2"><h2>2</h2></li>
+                 <li class="item_3"><h2>3</h2></li>
+                 <li class="item_4"><h2>4</h2></li>
+                 <li class="item_5"><h2>5</h2></li>
+                 <li class="item_6"><h2>6</h2></li>
+                 <li class="item_7"><h2>7</h2></li>
+                 <li class="item_8"><h2>8</h2></li>
+                 <li class="item_9"><h2>9</h2></li>
+                 <li class="item_10"><h2>10</h2></li>
+             </ul>
+         </div>
+     </div>
+
+     <h3>js</h3>
+     <div class="text_overflow">
+         <pre>
+         <code class="js">
+             CenterActiveGallery = new SwipeGallery({selector: $('.center_active')})
+         </code>
+     </pre>
+     </div>
+
+     <div class="center_active_loop gallery">
+         <div class="ul_overflow">
+             <ul>
+                 <li class="item_1"><h2>1</h2></li>
+                 <li class="item_2"><h2>2</h2></li>
+                 <li class="item_3"><h2>3</h2></li>
+                 <li class="item_4"><h2>4</h2></li>
+                 <li class="item_5"><h2>5</h2></li>
+                 <li class="item_6"><h2>6</h2></li>
+                 <li class="item_7"><h2>7</h2></li>
+                 <li class="item_8"><h2>8</h2></li>
+                 <li class="item_9"><h2>9</h2></li>
+                 <li class="item_10"><h2>10</h2></li>
+             </ul>
+         </div>
+     </div>
+
+     <h3>js</h3>
+     <div class="text_overflow">
+         <pre>
+         <code class="js">
+             CenterActiveLoopGallery = new SwipeGallery({selector: $('.center_active_loop'), loop: true})
+         </code>
+     </pre>
+     </div>
+
+     <div class="gallery3 gallery">
+         <div class="ul_overflow">
+             <ul>
+                 <li class="item_1"><h2>1</h2></li>
+                 <li class="item_2"><h2>2</h2></li>
+                 <li class="item_3"><h2>3</h2></li>
+                 <li class="item_4"><h2>4</h2></li>
+                 <li class="item_5"><h2>5</h2></li>
+                 <li class="item_6"><h2>6</h2></li>
+                 <li class="item_7"><h2>7</h2></li>
+                 <li class="item_8"><h2>8</h2></li>
+                 <li class="item_9"><h2>9</h2></li>
+                 <li class="item_10"><h2>10</h2></li>
+             </ul>
+         </div>
+     </div>
+
+     <h3>css</h3>
+     <div class="text_overflow">
+         <pre>
+         <code class="css">
+             .gallery ul li{
+                width:30%;
+             }
+         </code>
+     </pre>
+     </div>
+
+     <h3>js</h3>
+     <div class="text_overflow">
+         <pre>
+         <code class="js">
+             gallery3 = new SwipeGallery({selector: $('.gallery3'), loop: true})
+         </code>
+     </pre>
+     </div>
+
+ </div>
+ <script>hljs.initHighlightingOnLoad();</script>
 </body>
 </html>
