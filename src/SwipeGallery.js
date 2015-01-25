@@ -1730,7 +1730,7 @@ window.SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, d
   if (deltaX>0){
     mn = -1
   }
-  if (this.options.positionActive === 'center'){
+  if (this.options.positionActive === 'center' && Math.abs(deltaX)> this.itemsMas[this.currentActive].width*this.options.percentageSwipeElement){
     return this.detectActiveSlide(deltaX+mn*this.itemsMas[this.currentActive].width/2, deltaTime);
   }else if (this.options.positionActive === 'right'){
     return this.detectActiveSlide(deltaX, deltaTime);
@@ -1779,7 +1779,7 @@ window.SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
   var fastSwipe = 0;
   if (deltaTime<300){
     fastSwipe = 1;
-    console.log('fast')
+    /*console.log('fast')*/
   }
   if (deltaX>0){
     index--;
