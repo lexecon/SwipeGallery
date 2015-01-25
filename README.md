@@ -67,3 +67,7 @@ JS
         events: true //Навешивать ли события драга
 
 
+
+Примеры: http://lexecon.github.io/SwipeGallery/
+
+
