@@ -1577,10 +1577,8 @@ window.SwipeGallery = function (options) {
     this.update();
     if (this.options.events)
       new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
-    /*if (this.options.loop){
-     this.gallery.before('<div class="preLast" style="position:absolute; top:0; left:-100%; width:100%; height:100%"></div>')
 
-     }*/
+    this.itemsMas[this.currentActive].selector.addClass('active')
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
   }
