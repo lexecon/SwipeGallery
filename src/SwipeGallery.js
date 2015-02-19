@@ -1546,7 +1546,10 @@ window.SwipeGallery = function (options) {
     },
     onChange: function (index, max, itemMas) {
     },
-    render: function (index, max, itemMas){
+    onRender: function (index, max, itemMas){
+
+    },
+    onUpdate: function (index, max, itemMas){
 
     },
     events: true //Навешивать ли события драга
@@ -1582,13 +1585,16 @@ window.SwipeGallery = function (options) {
       new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
 
     this.itemsMas[this.currentActive].selector.addClass('active')
-    this.options.render(this.currentActive, this.galerySize-1, this.itemsMas)
+    this.options.onRender(this.currentActive, this.galerySize-1, this.itemsMas)
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
   }
 }
 window.SwipeGallery.prototype.createItemsMas = function(){
   var obj = this;
+  if (obj.itemsMas){
+    obj.currentActive = obj.itemsMas[obj.currentActive].index
+  }
   obj.itemsMas = []
   var left = 0;
   obj.galleryItems.each(function(num){
@@ -1660,6 +1666,7 @@ window.SwipeGallery.prototype.update = function (silent) {
     }
 
   }
+  this.options.onUpdate(this.currentActive, this.galerySize-1, this.itemsMas)
 
 }
 /*window.SwipeGallery.prototype.updateWidth = function () {
