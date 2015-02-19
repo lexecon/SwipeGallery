@@ -1546,16 +1546,19 @@ window.SwipeGallery = function (options) {
     },
     onChange: function (index, max, itemMas) {
     },
-    render: function (index, max, itemMas){
+    onRender: function (index, max, itemMas){
+
+    },
+    onUpdate: function (index, max, itemMas){
 
     },
     events: true //Навешивать ли события драга
   }, options);
 
   if (this.options.selector && $(this.options.selector).size() != 0) {
-/*    if (this.options.fullWidthItems){
-      this.options.elementsOnSide = 1;
-    }*/
+    /*    if (this.options.fullWidthItems){
+     this.options.elementsOnSide = 1;
+     }*/
     if (this.options.positionActive == 'auto' && this.options.loop){
       this.options.positionActive = 'left'
     }
@@ -1582,13 +1585,16 @@ window.SwipeGallery = function (options) {
       new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
 
     this.itemsMas[this.currentActive].selector.addClass('active')
-    this.options.render(this.currentActive, this.galerySize-1, this.itemsMas)
+    this.options.onRender(this.currentActive, this.galerySize-1, this.itemsMas)
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
   }
 }
 window.SwipeGallery.prototype.createItemsMas = function(){
   var obj = this;
+  if (obj.itemsMas){
+    obj.currentActive = obj.itemsMas[obj.currentActive].index
+  }
   obj.itemsMas = []
   var left = 0;
   obj.galleryItems.each(function(num){
@@ -1660,26 +1666,27 @@ window.SwipeGallery.prototype.update = function (silent) {
     }
 
   }
+  this.options.onUpdate(this.currentActive, this.galerySize-1, this.itemsMas)
 
 }
 /*window.SwipeGallery.prototype.updateWidth = function () {
-  this.setWithItem()
-  if (this.options.fullWidthItems){
-    this.createItemsMas();
-    this.updateWidthGallery();
-  }
-  if (this.itemsMas.length!=0)
-    this.showPane(this.currentActive, false)
-}*/
+ this.setWithItem()
+ if (this.options.fullWidthItems){
+ this.createItemsMas();
+ this.updateWidthGallery();
+ }
+ if (this.itemsMas.length!=0)
+ this.showPane(this.currentActive, false)
+ }*/
 
 /*window.SwipeGallery.prototype.setWithItem = function(){
-  this.galleryWidth = this.containerContent.width();
-  if (this.options.fullWidthItems){
-    this.galleryItems.width(this.galleryWidth);
-    this.gallery.width(this.galleryWidth * this.galerySize);
-    this.currentLeft = 0 - this.currentActive*this.galleryWidth;
-  }
-}*/
+ this.galleryWidth = this.containerContent.width();
+ if (this.options.fullWidthItems){
+ this.galleryItems.width(this.galleryWidth);
+ this.gallery.width(this.galleryWidth * this.galerySize);
+ this.currentLeft = 0 - this.currentActive*this.galleryWidth;
+ }
+ }*/
 window.SwipeGallery.prototype.updateArrow = function(){
   if (this.currentActive == 0){
     this.arrowLeft.addClass('disable')
@@ -1742,38 +1749,38 @@ window.SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, d
 
 
   /*if (deltaX<0){
-    deltaX = Math.abs(deltaX);
-    var active = this.currentActive;
-    var ostDelta = deltaX- this.itemsMas[active].width;
-    while (ostDelta>0){
-      active++;
-      if (!this.itemsMas[active]){
-        return active-1;
-      }
-      ostDelta -= this.itemsMas[active].width;
-    }
-    if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
-      active++
-    return active;
-  }else{
-    if (this.currentActive != 0){
-      var active = this.currentActive-1;
-      var ostDelta = deltaX- this.itemsMas[active].width;
-      while (ostDelta>0){
-        active--;
-        if (active <= 0){
-          return 0
-        }
-        ostDelta -= this.itemsMas[active].width;
-      }
-      if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
-        active++
-      return active;
-    }else{
-      return 0;
-    }
+   deltaX = Math.abs(deltaX);
+   var active = this.currentActive;
+   var ostDelta = deltaX- this.itemsMas[active].width;
+   while (ostDelta>0){
+   active++;
+   if (!this.itemsMas[active]){
+   return active-1;
+   }
+   ostDelta -= this.itemsMas[active].width;
+   }
+   if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
+   active++
+   return active;
+   }else{
+   if (this.currentActive != 0){
+   var active = this.currentActive-1;
+   var ostDelta = deltaX- this.itemsMas[active].width;
+   while (ostDelta>0){
+   active--;
+   if (active <= 0){
+   return 0
+   }
+   ostDelta -= this.itemsMas[active].width;
+   }
+   if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
+   active++
+   return active;
+   }else{
+   return 0;
+   }
 
-  }*/
+   }*/
 }
 window.SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
   var index = this.currentActive;
