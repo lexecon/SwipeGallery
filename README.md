@@ -54,7 +54,7 @@ JS
 
         selector: null, //Селектор на блок, в котором находится список
         activeSlide: 0,// Активный слайд
-        countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие мтрелки
+        countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие стрелки
         loop:false,// включает зацикливание галлереи
         elementsOnSide: 1,// сколько элементов должно быть по краям от активного (нужно для зацикленной галереи)
         positionActive: 'auto', //[left, center, right, auto] какую позицию будет занимать активный элемент
@@ -62,7 +62,9 @@ JS
         getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
           return ''
         },
-        onChange: function () {
+        onChange: function (index, max, itemMas) {// Метод срабатывает при перелистывании галереи
+        },
+        render: function (index, max, itemMas){// Метод срабатывает один раз после инициализации галереи
         },
         events: true //Навешивать ли события драга
 

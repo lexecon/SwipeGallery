@@ -1544,7 +1544,10 @@ window.SwipeGallery = function (options) {
     getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
       return ''
     },
-    onChange: function () {
+    onChange: function (index, max, itemMas) {
+    },
+    render: function (index, max, itemMas){
+
     },
     events: true //Навешивать ли события драга
   }, options);
@@ -1579,6 +1582,7 @@ window.SwipeGallery = function (options) {
       new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
 
     this.itemsMas[this.currentActive].selector.addClass('active')
+    this.options.render(this.currentActive, this.galerySize-1, this.itemsMas)
   } else {
     console.log("SwipeGallery: Селектор не может быть пустым")
   }
@@ -1833,7 +1837,7 @@ window.SwipeGallery.prototype.goTo = function(num) {
 window.SwipeGallery.prototype.showPane = function(index, animate) {
   var index = Math.max(0, Math.min(index, this.galerySize-1));
   if (this.currentActive != index){
-    this.options.onChange(index, this.galerySize-1);
+    this.options.onChange(index, this.galerySize-1, this.itemsMas);
     $('>li.active', this.gallery).removeClass('active');
     this.itemsMas[index].selector.addClass('active')
   }
