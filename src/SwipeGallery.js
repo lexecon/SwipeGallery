@@ -1544,7 +1544,7 @@ window.SwipeGallery = function (options) {
     getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
       return ''
     },
-    onChange: function (index, max, itemMas) {
+    onChange: function (index, max, itemMas, direction) {
     },
     onRender: function (index, max, itemMas){
 
@@ -1842,9 +1842,14 @@ window.SwipeGallery.prototype.goTo = function(num) {
   this.showPane(index, true);
 };
 window.SwipeGallery.prototype.showPane = function(index, animate) {
+
   var index = Math.max(0, Math.min(index, this.galerySize-1));
+
   if (this.currentActive != index){
-    this.options.onChange(index, this.galerySize-1, this.itemsMas);
+    direction = 'left'
+    if(index > this.currentActive)
+      direction = 'right'
+    this.options.onChange(index, this.galerySize-1, this.itemsMas, direction);
     $('>li.active', this.gallery).removeClass('active');
     this.itemsMas[index].selector.addClass('active')
   }

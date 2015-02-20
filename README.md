@@ -62,7 +62,7 @@ JS
         getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
           return ''
         },
-        onChange: function (index, max, itemMas) {// Обработчик срабатывает при перелистывании галереи
+        onChange: function (index, max, itemMas, direction) {// Обработчик срабатывает при перелистывании галереи
         },
         onRender: function (index, max, itemMas){// Обработчик срабатывает при инициализации галереи один раз
         },
