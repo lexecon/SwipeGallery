@@ -62,9 +62,11 @@ JS
         getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
           return ''
         },
-        onChange: function (index, max, itemMas) {// Метод срабатывает при перелистывании галереи
+        onChange: function (index, max, itemMas, direction) {// Обработчик срабатывает при перелистывании галереи
         },
-        render: function (index, max, itemMas){// Метод срабатывает один раз после инициализации галереи
+        onRender: function (index, max, itemMas){// Обработчик срабатывает при инициализации галереи один раз
+        },
+        onUpdate: function (index, max, itemMas){// Обработчик срабатывает при каждом обновлении галереи
         },
         events: true //Навешивать ли события драга
 
