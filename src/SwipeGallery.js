@@ -1566,7 +1566,7 @@ window.SwipeGallery = function (options) {
     this.containerContent = $(">.ul_overflow", this.container);
     this.gallery = $(">ul", this.containerContent);
     /*this.galleryWidth = this.gallery.width();*/
-    this.galleryItems = $(">li", this.gallery);
+    this.galleryItems = $(">*", this.gallery);
     this.appendControls();
     this.arrowLeft = $('>.arrow_left', this.container);
     this.arrowRight = $('>.arrow_right', this.container);
@@ -1787,8 +1787,7 @@ window.SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
   var widthElements = 0;
   var fastSwipe = 0;
   if (deltaTime<300){
-    fastSwipe = 1;
-    /*console.log('fast')*/
+    //fastSwipe = 1;
   }
   if (deltaX>0){
     index--;
