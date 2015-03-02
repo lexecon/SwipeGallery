@@ -1843,12 +1843,12 @@ window.SwipeGallery.prototype.goTo = function(num) {
 window.SwipeGallery.prototype.showPane = function(index, animate) {
 
   var index = Math.max(0, Math.min(index, this.galerySize-1));
-
+  var direction = 'left';
+  var changeallery = false;
   if (this.currentActive != index){
-    direction = 'left'
+    changeallery = true
     if(index > this.currentActive)
       direction = 'right'
-    this.options.onChange(index, this.galerySize-1, this.itemsMas, direction);
     $('>li.active', this.gallery).removeClass('active');
     this.itemsMas[index].selector.addClass('active')
   }
@@ -1864,7 +1864,7 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
       this.setPositionElement();
     }
     this.updateArrow();
-    if (!this.showLoop && this.currentLeft< this.maxLeft){
+    if (!this.showLoop && Math.abs(this.currentLeft)> Math.abs(this.maxLeft)){
       this.currentLeft= this.maxLeft
     }
   }else{
@@ -1877,6 +1877,9 @@ window.SwipeGallery.prototype.showPane = function(index, animate) {
     }
     this.setPositionElement();
     this.updateArrow();
+  }
+  if (changeallery){
+    this.options.onChange(this.currentActive, this.galerySize-1, this.itemsMas, direction);
   }
 
 
