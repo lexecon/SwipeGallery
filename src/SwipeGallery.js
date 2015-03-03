@@ -1639,7 +1639,7 @@ window.SwipeGallery.prototype.appendControls = function () {
 window.SwipeGallery.prototype.update = function (silent) {
   this.containerContent = $(">.ul_overflow", this.container);
   this.gallery = $(">ul", this.containerContent);
-  this.galleryItems = $(">li", this.gallery);
+  this.galleryItems = $(">*", this.gallery);
   this.createItemsMas();
   this.controlsContainer.html('');
   this.galerySize = this.galleryItems.size();
