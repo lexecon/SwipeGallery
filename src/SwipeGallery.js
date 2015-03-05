@@ -1532,414 +1532,426 @@
 
 })(window);
 
-window.SwipeGallery = function (options) {
-  this.options = $.extend({
-    selector: null, //Селектор на блок, в котором находится список
-    activeSlide: 0,// Активный слайд
-    countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие мтрелки
-    loop:false,// включает зацикливание галлереи
-    elementsOnSide: 1,// сколько элементов должно быть по краям от активного (нужно для зацикленной галереи)
-    positionActive: 'auto', //[left, center, right, auto] какую позицию будет занимать активный элемент
-    percentageSwipeElement: 0.3, // Сколько процентов элемента надо проскролить для переключения на него
-    getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
-      return ''
-    },
-    onChange: function (index, max, itemMas, direction) {
-    },
-    onRender: function (index, max, itemMas){
+(function(){
 
-    },
-    onUpdate: function (index, max, itemMas){
+  var SwipeGallery = function (options) {
+    this.options = $.extend({
+      selector: null, //Селектор на блок, в котором находится список
+      activeSlide: 0,// Активный слайд
+      countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие мтрелки
+      loop:false,// включает зацикливание галлереи
+      elementsOnSide: 1,// сколько элементов должно быть по краям от активного (нужно для зацикленной галереи)
+      positionActive: 'auto', //[left, center, right, auto] какую позицию будет занимать активный элемент
+      percentageSwipeElement: 0.3, // Сколько процентов элемента надо проскролить для переключения на него
+      getHtmlItem: function (num) {//Метод возвращает html код для содержимого контрола, под номером num
+        return ''
+      },
+      onChange: function (index, max, itemMas, direction) {
+      },
+      onRender: function (index, max, itemMas){
 
-    },
-    events: true //Навешивать ли события драга
-  }, options);
+      },
+      onUpdate: function (index, max, itemMas){
 
-  if (this.options.selector && $(this.options.selector).size() != 0) {
-    /*    if (this.options.fullWidthItems){
-     this.options.elementsOnSide = 1;
-     }*/
-    if (this.options.positionActive == 'auto' && this.options.loop){
-      this.options.positionActive = 'left'
+      },
+      events: true //Навешивать ли события драга
+    }, options);
+
+    if (this.options.selector && $(this.options.selector).size() != 0) {
+      /*    if (this.options.fullWidthItems){
+       this.options.elementsOnSide = 1;
+       }*/
+      if (this.options.positionActive == 'auto' && this.options.loop){
+        this.options.positionActive = 'left'
+      }
+      this.container = $(this.options.selector);
+      this.containerContent = $(">.ul_overflow", this.container);
+      this.gallery = $(">ul", this.containerContent);
+      /*this.galleryWidth = this.gallery.width();*/
+      this.galleryItems = $(">*", this.gallery);
+      this.appendControls();
+      this.arrowLeft = $('>.arrow_left', this.container);
+      this.arrowRight = $('>.arrow_right', this.container);
+      this.controlsContainer = $('>.controls_overflow .controls', this.container);
+      this.currentActive = this.options.activeSlide;
+      this.currentLeft = 0;
+      this.controlItems = null;
+      this.galerySize = 0;
+      this.galleryWidth = 0;
+
+      this.transform3d = this.has3d();
+      this.showLoop = this.options.loop;
+
+      this.update();
+      if (this.options.events)
+        new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
+
+      this.itemsMas[this.currentActive].selector.addClass('active')
+      this.options.onRender(this.currentActive, this.galerySize-1, this.itemsMas)
+    } else {
+      console.log("SwipeGallery: Селектор не может быть пустым")
     }
-    this.container = $(this.options.selector);
+  }
+  SwipeGallery.prototype.createItemsMas = function(){
+    var obj = this;
+    if (obj.itemsMas){
+      obj.currentActive = obj.itemsMas[obj.currentActive].index
+    }
+    obj.itemsMas = []
+    var left = 0;
+    obj.galleryItems.each(function(num){
+      obj.itemsMas.push({
+        index: num,
+        selector: $(this),
+        width: $(this).width(),
+        left: left
+      })
+      left += $(this).width()
+    })
+  }
+  SwipeGallery.prototype.updateWidthGallery = function(){
+    var commonWidth = 0;
+    $.each(this.itemsMas, function(num){
+      this.selector.css({left:this.left})
+      commonWidth += this.width
+    })
+    this.galleryWidth = this.containerContent.width();
+    if (this.options.positionActive === 'auto') {
+      if (this.galleryWidth >= commonWidth) {
+        this.centerLeft = this.galleryWidth / 2 - commonWidth / 2
+      } else {
+        this.centerLeft = 0;
+      }
+      this.maxLeft = 0 - (this.itemsMas[this.itemsMas.length - 1].left - this.galleryWidth + this.itemsMas[this.itemsMas.length - 1].width);
+    }
+  }
+
+  SwipeGallery.prototype.updateControllState = function(){
+    this.controlItems.removeClass('active');
+    this.controlItems.eq(this.itemsMas[this.currentActive].index).addClass('active');
+
+  }
+  SwipeGallery.prototype.appendControls = function () {
+    this.container.append('<div class="controls_overflow">\
+                              <div class="controls"></div>\
+                           </div>\
+                           <div class="arrow_left"></div>\
+                           <div class="arrow_right"></div>');
+  }
+  SwipeGallery.prototype.update = function (silent) {
     this.containerContent = $(">.ul_overflow", this.container);
     this.gallery = $(">ul", this.containerContent);
-    /*this.galleryWidth = this.gallery.width();*/
     this.galleryItems = $(">*", this.gallery);
-    this.appendControls();
-    this.arrowLeft = $('>.arrow_left', this.container);
-    this.arrowRight = $('>.arrow_right', this.container);
-    this.controlsContainer = $('>.controls_overflow .controls', this.container);
-    this.currentActive = this.options.activeSlide;
-    this.currentLeft = 0;
-    this.controlItems = null;
-    this.galerySize = 0;
-    this.galleryWidth = 0;
-
-    this.transform3d = this.has3d();
-    this.showLoop = this.options.loop;
-
-    this.update();
-    if (this.options.events)
-      new SwipeGalleryHammer(this.containerContent[0], { drag_lock_to_axis: true}).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
-
-    this.itemsMas[this.currentActive].selector.addClass('active')
-    this.options.onRender(this.currentActive, this.galerySize-1, this.itemsMas)
-  } else {
-    console.log("SwipeGallery: Селектор не может быть пустым")
-  }
-}
-window.SwipeGallery.prototype.createItemsMas = function(){
-  var obj = this;
-  if (obj.itemsMas){
-    obj.currentActive = obj.itemsMas[obj.currentActive].index
-  }
-  obj.itemsMas = []
-  var left = 0;
-  obj.galleryItems.each(function(num){
-    obj.itemsMas.push({
-      index: num,
-      selector: $(this),
-      width: $(this).width(),
-      left: left
-    })
-    left += $(this).width()
-  })
-}
-window.SwipeGallery.prototype.updateWidthGallery = function(){
-  var commonWidth = 0;
-  $.each(this.itemsMas, function(num){
-    this.selector.css({left:this.left})
-    commonWidth += this.width
-  })
-  this.galleryWidth = this.containerContent.width();
-  if (this.options.positionActive === 'auto') {
-    if (this.galleryWidth >= commonWidth) {
-      this.centerLeft = this.galleryWidth / 2 - commonWidth / 2
-    } else {
-      this.centerLeft = 0;
+    this.createItemsMas();
+    this.controlsContainer.html('');
+    this.galerySize = this.galleryItems.size();
+    var htmlControls = "";
+    for (var i = 0; i < this.galerySize; i++) {
+      htmlControls += '<div class="control">' + this.options.getHtmlItem(i) + '</div>';
     }
-    this.maxLeft = 0 - (this.itemsMas[this.itemsMas.length - 1].left - this.galleryWidth + this.itemsMas[this.itemsMas.length - 1].width);
+    this.controlsContainer.append(htmlControls);
+    this.controlItems = $('>.control', this.controlsContainer);
+
+    if (this.options.loop && this.galerySize>= (this.options.elementsOnSide*2+1)){
+      this.showLoop = true;
+    }else {
+      this.showLoop = false;
+    }
+
+    if (this.itemsMas.length>0){
+      this.updateControllState();
+      this.updateWidthGallery();
+      if (!silent){
+        this.showPane(this.currentActive, false);
+      }else{
+        this.updateArrow();
+      }
+
+    }
+    this.options.onUpdate(this.currentActive, this.galerySize-1, this.itemsMas)
+
   }
-}
+  /*SwipeGallery.prototype.updateWidth = function () {
+   this.setWithItem()
+   if (this.options.fullWidthItems){
+   this.createItemsMas();
+   this.updateWidthGallery();
+   }
+   if (this.itemsMas.length!=0)
+   this.showPane(this.currentActive, false)
+   }*/
 
-window.SwipeGallery.prototype.updateControllState = function(){
-  this.controlItems.removeClass('active');
-  this.controlItems.eq(this.itemsMas[this.currentActive].index).addClass('active');
-
-}
-window.SwipeGallery.prototype.appendControls = function () {
-  this.container.append('<div class="controls_overflow">\
-                            <div class="controls"></div>\
-                         </div>\
-                         <div class="arrow_left"></div>\
-                         <div class="arrow_right"></div>');
-}
-window.SwipeGallery.prototype.update = function (silent) {
-  this.containerContent = $(">.ul_overflow", this.container);
-  this.gallery = $(">ul", this.containerContent);
-  this.galleryItems = $(">*", this.gallery);
-  this.createItemsMas();
-  this.controlsContainer.html('');
-  this.galerySize = this.galleryItems.size();
-  var htmlControls = "";
-  for (var i = 0; i < this.galerySize; i++) {
-    htmlControls += '<div class="control">' + this.options.getHtmlItem(i) + '</div>';
-  }
-  this.controlsContainer.append(htmlControls);
-  this.controlItems = $('>.control', this.controlsContainer);
-
-  if (this.options.loop && this.galerySize>= (this.options.elementsOnSide*2+1)){
-    this.showLoop = true;
-  }else {
-    this.showLoop = false;
-  }
-
-  if (this.itemsMas.length>0){
-    this.updateControllState();
-    this.updateWidthGallery();
-    if (!silent){
-      this.showPane(this.currentActive, false);
+  /*SwipeGallery.prototype.setWithItem = function(){
+   this.galleryWidth = this.containerContent.width();
+   if (this.options.fullWidthItems){
+   this.galleryItems.width(this.galleryWidth);
+   this.gallery.width(this.galleryWidth * this.galerySize);
+   this.currentLeft = 0 - this.currentActive*this.galleryWidth;
+   }
+   }*/
+  SwipeGallery.prototype.updateArrow = function(){
+    if (this.currentActive == 0){
+      this.arrowLeft.addClass('disable')
     }else{
+      this.arrowLeft.removeClass('disable')
+    }
+    if (this.currentActive >= this.galerySize -this.options.countSwitchingSlides){
+      this.arrowRight.addClass('disable')
+    }else{
+      this.arrowRight.removeClass('disable')
+    }
+    if (this.galerySize <= this.options.countSwitchingSlides){
+      this.arrowLeft.addClass('hide')
+      this.arrowRight.addClass('hide')
+    }else{
+      this.arrowLeft.removeClass('hide')
+      this.arrowRight.removeClass('hide')
+    }
+  }
+  SwipeGallery.prototype.handleHammer = function (ev) {
+    ev.gesture.preventDefault();
+
+    switch(ev.type) {
+      case 'dragright':
+      case 'dragleft':
+        this.slidersMove(this.currentLeft + ev.gesture.deltaX);
+        break;
+
+      case 'swipeleft':
+        this.next();
+        ev.gesture.stopDetect();
+        break;
+
+      case 'swiperight':
+        this.prev();
+        ev.gesture.stopDetect();
+        break;
+
+      case 'release':
+        this.showPane(this.detectActiveSlideWithPosition(ev.gesture.deltaX, ev.gesture.deltaTime), true);
+        break;
+    }
+  }
+
+  SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, deltaTime){
+    if (deltaX === 0){
+      return this.currentActive;
+    }
+    var mn = 1;
+    if (deltaX>0){
+      mn = -1
+    }
+    if (this.options.positionActive === 'center' && Math.abs(deltaX)> this.itemsMas[this.currentActive].width*this.options.percentageSwipeElement){
+      return this.detectActiveSlide(deltaX+mn*this.itemsMas[this.currentActive].width/2, deltaTime);
+    }else if (this.options.positionActive === 'right'){
+      return this.detectActiveSlide(deltaX, deltaTime);
+    }else{
+      return this.detectActiveSlide(deltaX, deltaTime);
+    }
+
+
+    /*if (deltaX<0){
+     deltaX = Math.abs(deltaX);
+     var active = this.currentActive;
+     var ostDelta = deltaX- this.itemsMas[active].width;
+     while (ostDelta>0){
+     active++;
+     if (!this.itemsMas[active]){
+     return active-1;
+     }
+     ostDelta -= this.itemsMas[active].width;
+     }
+     if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
+     active++
+     return active;
+     }else{
+     if (this.currentActive != 0){
+     var active = this.currentActive-1;
+     var ostDelta = deltaX- this.itemsMas[active].width;
+     while (ostDelta>0){
+     active--;
+     if (active <= 0){
+     return 0
+     }
+     ostDelta -= this.itemsMas[active].width;
+     }
+     if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
+     active++
+     return active;
+     }else{
+     return 0;
+     }
+
+     }*/
+  }
+  SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
+    var index = this.currentActive;
+    var widthElements = 0;
+    var fastSwipe = 0;
+    if (deltaTime<300){
+      //fastSwipe = 1;
+    }
+    if (deltaX>0){
+      index--;
+      while (this.itemsMas[index] && (deltaX-this.itemsMas[index].width*this.options.percentageSwipeElement-widthElements)>=0){
+        widthElements += this.itemsMas[index].width;
+        index--;
+      }
+      return index+1-fastSwipe;
+    }else{
+      while (this.itemsMas[index] && (deltaX+this.itemsMas[index].width*this.options.percentageSwipeElement+widthElements)<=0){
+        widthElements += this.itemsMas[index].width;
+        index++;
+      }
+      return index+fastSwipe;
+    }
+  }
+
+  SwipeGallery.prototype.elementMoveLeft = function(){
+    var lastElement = this.itemsMas.pop();
+    lastElement.left = this.itemsMas[0].left - lastElement.width
+    this.itemsMas.unshift(lastElement);
+    this.currentActive++;
+    this.setLeft(0);
+  }
+
+  SwipeGallery.prototype.elementMoveRight = function(){
+    var firstElement = this.itemsMas.shift();
+    firstElement.left = this.itemsMas[this.galerySize-2].left + this.itemsMas[this.galerySize-2].width;
+    this.itemsMas.push(firstElement);
+    this.currentActive--;
+    this.setLeft(this.galerySize-1);
+  }
+
+  SwipeGallery.prototype.setLeft = function(num){
+    var element = this.itemsMas[num]
+    if (element){
+      element.selector.css({left:element.left+'px'})
+    }
+  }
+
+  SwipeGallery.prototype.next = function() { return this.showPane(this.currentActive+this.options.countSwitchingSlides, true); };
+  SwipeGallery.prototype.prev = function() { return this.showPane(this.currentActive-this.options.countSwitchingSlides, true); };
+  SwipeGallery.prototype.goTo = function(num) {
+    var index = 0;
+    $.each(this.itemsMas, function(numItem){
+      if (this.index === num){
+        index = numItem;
+        return 0;
+      }
+    })
+    this.showPane(index, true);
+  };
+  SwipeGallery.prototype.showPane = function(index, animate) {
+
+    var index = Math.max(0, Math.min(index, this.galerySize-1));
+    var direction = 'left';
+    var changeallery = false;
+    if (this.currentActive != index){
+      changeallery = true
+      if(index > this.currentActive)
+        direction = 'right'
+      $('>li.active', this.gallery).removeClass('active');
+      this.itemsMas[index].selector.addClass('active')
+    }
+    this.currentActive = index;
+
+    this.updateControllState()
+
+    if (this.options.positionActive === 'auto') {
+      this.currentLeft= 0 - this.itemsMas[index].left;
+      if (this.centerLeft!= 0){
+        this.currentLeft= this.centerLeft
+      }else{
+        this.setPositionElement();
+      }
+      this.updateArrow();
+      if (!this.showLoop && Math.abs(this.currentLeft)> Math.abs(this.maxLeft)){
+        this.currentLeft= this.maxLeft
+      }
+    }else{
+      if (this.options.positionActive === 'left'){
+        this.currentLeft= 0 - this.itemsMas[index].left;
+      }else if (this.options.positionActive === 'center'){
+        this.currentLeft= this.galleryWidth/2 - this.itemsMas[index].left -this.itemsMas[index].width/2
+      }else if (this.options.positionActive === 'right'){
+        this.currentLeft= this.galleryWidth - this.itemsMas[index].width - this.itemsMas[index].left
+      }
+      this.setPositionElement();
       this.updateArrow();
     }
-
-  }
-  this.options.onUpdate(this.currentActive, this.galerySize-1, this.itemsMas)
-
-}
-/*window.SwipeGallery.prototype.updateWidth = function () {
- this.setWithItem()
- if (this.options.fullWidthItems){
- this.createItemsMas();
- this.updateWidthGallery();
- }
- if (this.itemsMas.length!=0)
- this.showPane(this.currentActive, false)
- }*/
-
-/*window.SwipeGallery.prototype.setWithItem = function(){
- this.galleryWidth = this.containerContent.width();
- if (this.options.fullWidthItems){
- this.galleryItems.width(this.galleryWidth);
- this.gallery.width(this.galleryWidth * this.galerySize);
- this.currentLeft = 0 - this.currentActive*this.galleryWidth;
- }
- }*/
-window.SwipeGallery.prototype.updateArrow = function(){
-  if (this.currentActive == 0){
-    this.arrowLeft.addClass('disable')
-  }else{
-    this.arrowLeft.removeClass('disable')
-  }
-  if (this.currentActive >= this.galerySize -this.options.countSwitchingSlides){
-    this.arrowRight.addClass('disable')
-  }else{
-    this.arrowRight.removeClass('disable')
-  }
-  if (this.galerySize <= this.options.countSwitchingSlides){
-    this.arrowLeft.addClass('hide')
-    this.arrowRight.addClass('hide')
-  }else{
-    this.arrowLeft.removeClass('hide')
-    this.arrowRight.removeClass('hide')
-  }
-}
-window.SwipeGallery.prototype.handleHammer = function (ev) {
-  ev.gesture.preventDefault();
-
-  switch(ev.type) {
-    case 'dragright':
-    case 'dragleft':
-      this.slidersMove(this.currentLeft + ev.gesture.deltaX);
-      break;
-
-    case 'swipeleft':
-      this.next();
-      ev.gesture.stopDetect();
-      break;
-
-    case 'swiperight':
-      this.prev();
-      ev.gesture.stopDetect();
-      break;
-
-    case 'release':
-      this.showPane(this.detectActiveSlideWithPosition(ev.gesture.deltaX, ev.gesture.deltaTime), true);
-      break;
-  }
-}
-
-window.SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, deltaTime){
-  if (deltaX === 0){
-    return this.currentActive;
-  }
-  var mn = 1;
-  if (deltaX>0){
-    mn = -1
-  }
-  if (this.options.positionActive === 'center' && Math.abs(deltaX)> this.itemsMas[this.currentActive].width*this.options.percentageSwipeElement){
-    return this.detectActiveSlide(deltaX+mn*this.itemsMas[this.currentActive].width/2, deltaTime);
-  }else if (this.options.positionActive === 'right'){
-    return this.detectActiveSlide(deltaX, deltaTime);
-  }else{
-    return this.detectActiveSlide(deltaX, deltaTime);
-  }
-
-
-  /*if (deltaX<0){
-   deltaX = Math.abs(deltaX);
-   var active = this.currentActive;
-   var ostDelta = deltaX- this.itemsMas[active].width;
-   while (ostDelta>0){
-   active++;
-   if (!this.itemsMas[active]){
-   return active-1;
-   }
-   ostDelta -= this.itemsMas[active].width;
-   }
-   if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
-   active++
-   return active;
-   }else{
-   if (this.currentActive != 0){
-   var active = this.currentActive-1;
-   var ostDelta = deltaX- this.itemsMas[active].width;
-   while (ostDelta>0){
-   active--;
-   if (active <= 0){
-   return 0
-   }
-   ostDelta -= this.itemsMas[active].width;
-   }
-   if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
-   active++
-   return active;
-   }else{
-   return 0;
-   }
-
-   }*/
-}
-window.SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime){
-  var index = this.currentActive;
-  var widthElements = 0;
-  var fastSwipe = 0;
-  if (deltaTime<300){
-    //fastSwipe = 1;
-  }
-  if (deltaX>0){
-    index--;
-    while (this.itemsMas[index] && (deltaX-this.itemsMas[index].width*this.options.percentageSwipeElement-widthElements)>=0){
-      widthElements += this.itemsMas[index].width;
-      index--;
+    if (changeallery){
+      this.options.onChange(this.currentActive, this.galerySize-1, this.itemsMas, direction);
     }
-    return index+1-fastSwipe;
-  }else{
-    while (this.itemsMas[index] && (deltaX+this.itemsMas[index].width*this.options.percentageSwipeElement+widthElements)<=0){
-      widthElements += this.itemsMas[index].width;
-      index++;
+
+
+    /**/
+    //this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
+
+
+    this.slidersMove(this.currentLeft, animate);
+
+  };
+
+
+  SwipeGallery.prototype.setPositionElement = function(){
+    if (this.showLoop){
+      for (var i = this.currentActive; i< this.options.elementsOnSide; i++){
+        this.elementMoveLeft()
+      }
+      for (var i = this.currentActive; i> this.galerySize-1-this.options.elementsOnSide; i--){
+        this.elementMoveRight()
+      }
     }
-    return index+fastSwipe;
   }
-}
 
-window.SwipeGallery.prototype.elementMoveLeft = function(){
-  var lastElement = this.itemsMas.pop();
-  lastElement.left = this.itemsMas[0].left - lastElement.width
-  this.itemsMas.unshift(lastElement);
-  this.currentActive++;
-  this.setLeft(0);
-}
-
-window.SwipeGallery.prototype.elementMoveRight = function(){
-  var firstElement = this.itemsMas.shift();
-  firstElement.left = this.itemsMas[this.galerySize-2].left + this.itemsMas[this.galerySize-2].width;
-  this.itemsMas.push(firstElement);
-  this.currentActive--;
-  this.setLeft(this.galerySize-1);
-}
-
-window.SwipeGallery.prototype.setLeft = function(num){
-  var element = this.itemsMas[num]
-  if (element){
-    element.selector.css({left:element.left+'px'})
-  }
-}
-
-window.SwipeGallery.prototype.next = function() { return this.showPane(this.currentActive+this.options.countSwitchingSlides, true); };
-window.SwipeGallery.prototype.prev = function() { return this.showPane(this.currentActive-this.options.countSwitchingSlides, true); };
-window.SwipeGallery.prototype.goTo = function(num) {
-  var index = 0;
-  $.each(this.itemsMas, function(numItem){
-    if (this.index === num){
-      index = numItem;
-      return 0;
-    }
-  })
-  this.showPane(index, true);
-};
-window.SwipeGallery.prototype.showPane = function(index, animate) {
-
-  var index = Math.max(0, Math.min(index, this.galerySize-1));
-  var direction = 'left';
-  var changeallery = false;
-  if (this.currentActive != index){
-    changeallery = true
-    if(index > this.currentActive)
-      direction = 'right'
-    $('>li.active', this.gallery).removeClass('active');
-    this.itemsMas[index].selector.addClass('active')
-  }
-  this.currentActive = index;
-
-  this.updateControllState()
-
-  if (this.options.positionActive === 'auto') {
-    this.currentLeft= 0 - this.itemsMas[index].left;
-    if (this.centerLeft!= 0){
-      this.currentLeft= this.centerLeft
+  SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
+    if(animate) {
+      this.gallery.addClass("animate");
     }else{
-      this.setPositionElement();
+      this.gallery.removeClass("animate");
     }
-    this.updateArrow();
-    if (!this.showLoop && Math.abs(this.currentLeft)> Math.abs(this.maxLeft)){
-      this.currentLeft= this.maxLeft
+    this.gallery.width(); // Для принудительной перерисовки
+    if(this.transform3d) {
+      this.gallery.css("transform", "translate3d("+ px +"px,0,0)");
     }
-  }else{
-    if (this.options.positionActive === 'left'){
-      this.currentLeft= 0 - this.itemsMas[index].left;
-    }else if (this.options.positionActive === 'center'){
-      this.currentLeft= this.galleryWidth/2 - this.itemsMas[index].left -this.itemsMas[index].width/2
-    }else if (this.options.positionActive === 'right'){
-      this.currentLeft= this.galleryWidth - this.itemsMas[index].width - this.itemsMas[index].left
-    }
-    this.setPositionElement();
-    this.updateArrow();
-  }
-  if (changeallery){
-    this.options.onChange(this.currentActive, this.galerySize-1, this.itemsMas, direction);
-  }
-
-
-  /**/
-  //this.maxLeft = 0-(this.itemsMas[this.itemsMas.length-1].left - this.containerContent.width() + this.itemsMas[this.itemsMas.length-1].width);
-
-
-  this.slidersMove(this.currentLeft, animate);
-
-};
-
-
-window.SwipeGallery.prototype.setPositionElement = function(){
-  if (this.showLoop){
-    for (var i = this.currentActive; i< this.options.elementsOnSide; i++){
-      this.elementMoveLeft()
-    }
-    for (var i = this.currentActive; i> this.galerySize-1-this.options.elementsOnSide; i--){
-      this.elementMoveRight()
-    }
-  }
-}
-
-window.SwipeGallery.prototype.slidersMove = function (px, animate) { //Перемещает портянку со слайдами влево на указанное количество пикселей
-  if(animate) {
-    this.gallery.addClass("animate");
-  }else{
-    this.gallery.removeClass("animate");
-  }
-  this.gallery.width(); // Для принудительной перерисовки
-  if(this.transform3d) {
-    this.gallery.css("transform", "translate3d("+ px +"px,0,0)");
-  }
-  else {
-    this.gallery.css("left", px+"px");
-  }
-}
-
-window.SwipeGallery.prototype.has3d = function has3d() {
-  var el = document.createElement('p'),
-    has3d,
-    transforms = {
-      'webkitTransform':'-webkit-transform',
-      'OTransform':'-o-transform',
-      'msTransform':'-ms-transform',
-      'MozTransform':'-moz-transform',
-      'transform':'transform'
-    };
-
-  // Add it to the body to get the computed style.
-  document.body.insertBefore(el, null);
-
-  for (var t in transforms) {
-    if (el.style[t] !== undefined) {
-      el.style[t] = "translate3d(1px,1px,1px)";
-      has3d = window.getComputedStyle(el).getPropertyValue(transforms[t]);
+    else {
+      this.gallery.css("left", px+"px");
     }
   }
 
-  document.body.removeChild(el);
+  SwipeGallery.prototype.has3d = function has3d() {
+    var el = document.createElement('p'),
+      has3d,
+      transforms = {
+        'webkitTransform':'-webkit-transform',
+        'OTransform':'-o-transform',
+        'msTransform':'-ms-transform',
+        'MozTransform':'-moz-transform',
+        'transform':'transform'
+      };
 
-  return (has3d !== undefined && has3d.length > 0 && has3d !== "none");
-}
+    // Add it to the body to get the computed style.
+    document.body.insertBefore(el, null);
+
+    for (var t in transforms) {
+      if (el.style[t] !== undefined) {
+        el.style[t] = "translate3d(1px,1px,1px)";
+        has3d = window.getComputedStyle(el).getPropertyValue(transforms[t]);
+      }
+    }
+
+    document.body.removeChild(el);
+
+    return (has3d !== undefined && has3d.length > 0 && has3d !== "none");
+  }
+  if ( ( typeof(define) === 'function' ) && ( typeof(define.amd) === 'object') && define.amd ) {
+    define([], function(){
+      return SwipeGallery;
+    });
+  } else {
+    window.SwipeGallery = SwipeGallery;
+  }
+
+
+})();
