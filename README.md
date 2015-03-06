@@ -49,7 +49,7 @@ CSS
 JS
 ```js
     Gallery = new SwipeGallery({selector: $('#gallery')})
-```js
+```
     
 Параметры при инициализации:
 ```js
