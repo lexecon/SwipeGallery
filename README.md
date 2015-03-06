@@ -72,9 +72,9 @@ JS
 ```
 
 
-
+```bash
 bower install swipegallery
-
+```
 
 Примеры: http://lexecon.github.io/SwipeGallery/
 
