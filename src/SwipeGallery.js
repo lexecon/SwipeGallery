@@ -1594,7 +1594,7 @@
   }
   SwipeGallery.prototype.createItemsMas = function(){
     var obj = this;
-    if (obj.itemsMas){
+    if (obj.itemsMas && obj.itemsMas.length > 0){
       obj.currentActive = obj.itemsMas[obj.currentActive].index
     }
     obj.itemsMas = []
