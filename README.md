@@ -6,7 +6,7 @@ SwipeGallery
 Пример изпользования:
 
 HTML
-
+```html
     <div id="gallery">
       <div class="ul_overflow">
         <ul>
@@ -18,9 +18,10 @@ HTML
         </ul>
       </div>
     </div>
-    
+```
+
 CSS
-    
+```css    
     #gallery, .ul_overflow{
         width: 100%;
         height:100%;
@@ -44,14 +45,14 @@ CSS
         width:100%;
         height:100%;
     }
-    
+```    
 JS
-
+```js
     Gallery = new SwipeGallery({selector: $('#gallery')})
-    
+```
     
 Параметры при инициализации:
-
+```js
         selector: null, //Селектор на блок, в котором находится список
         activeSlide: 0,// Активный слайд
         countSwitchingSlides: 1,// сколько слайдов прокручивает за одно нажатие стрелки
@@ -68,12 +69,12 @@ JS
         onUpdate: function (index, max, itemMas){// Обработчик срабатывает при каждом обновлении галереи
         },
         events: true //Навешивать ли события драга
+```
 
 
+```bash
 bower install swipegallery
-
-
-
+```
 
 Примеры: http://lexecon.github.io/SwipeGallery/
 
