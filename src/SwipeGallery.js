@@ -1638,6 +1638,9 @@
                            <div class="arrow_left"></div>\
                            <div class="arrow_right"></div>');
   }
+  SwipeGallery.prototype.destroy = function(){
+    $('>.controls_overflow, >.arrow_left, >.arrow_right', this.container).remove()
+  }
   SwipeGallery.prototype.update = function (silent) {
     this.containerContent = $(">.ul_overflow", this.container);
     this.gallery = $(">ul", this.containerContent);
