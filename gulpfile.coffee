@@ -1,15 +1,20 @@
-gulp = require "gulp"
-debug = require 'gulp-debug'
-tap = require 'gulp-tap'
-path = require "./pat"
+gulp = require('gulp')
+coffee = require('gulp-coffee')
+header = require('gulp-header')
+bump = require('gulp-header')
+gutil = require('gulp-util')
 
+pkg = require('./bower.json')
+banner = "/*! #{ pkg.name } #{ pkg.version } */\n"
 
+gulp.task 'coffee', ->
+  try
+    gulp.src('./src/*')
+    .pipe(coffee({bare:true})
+      .on('error', gutil.log))
+    .pipe(header(banner))
+    .pipe(gulp.dest('./dist/'))
+  catch e
 
-
-
-gulp.task 'default', ->
-  gulp.src("src/*.coffee")
-    .pipe debug {title: 'all coffee file:'}
-    .pipe tap (file, t)->
-      console.log "#{file} #{t}"
-    .pipe gulp.dest("build/")
+gulp.task 'default', ['coffee'], ->
+  gulp.watch './src/*.coffee', ['coffee']

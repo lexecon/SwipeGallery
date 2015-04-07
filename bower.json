@@ -1,6 +1,6 @@
 {
   "name": "SwipeGallery",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "homepage": "https://github.com/lexecon/SwipeGallery",
   "authors": [
     "Alexey Krylov <alexey.krylov@saltpepper.ru>"
@@ -24,6 +24,6 @@
     "tests"
   ],
   "dependencies": {
-    "hammer.js": "~2.0.4"
+    "hammer.js": "1.0.11"
   }
 }
