@@ -1,4 +1,4 @@
-/*! SwipeGallery 0.4.0 */
+/*! SwipeGallery 0.5.0 */
 var Holder;
 
 Holder = function(hammer) {
