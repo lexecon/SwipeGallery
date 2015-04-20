@@ -17,8 +17,10 @@ Holder = (hammer)->
         onRender: (index, max, itemMas) ->
 
         onUpdate: (index, max, itemMas) ->
+        events: true #Навешивать ли события на свайп
+        mouseEvents: false #Навешивать ли события мыши (свайп)
 
-        events: true #Навешивать ли события драга
+        fastSwipe: true #При быстром свайпе увеличивать количество прокручиваемого контента
       , options)
       if @options.selector and $(@options.selector).size() isnt 0
         @options.positionActive = "left"  if @options.positionActive is "auto" and @options.loop
@@ -41,9 +43,9 @@ Holder = (hammer)->
         @showLoop = @options.loop
         @update()
         if @options.events
-          new hammer(@containerContent[0],
-            drag_lock_to_axis: true
-          ).on "release dragleft dragright swipeleft swiperight", $.proxy(@handleHammer, this)
+          hammerManager = new hammer.Manager(@containerContent[0])
+          hammerManager.add( new hammer.Pan({ direction: hammer.DIRECTION_HORIZONTAL, threshold: 0 }) )
+          hammerManager.on("panleft panright panend", $.proxy(@handleHammer, this))
         @itemsMas[@currentActive].selector.addClass "active"  if @itemsMas.length > 0
         @options.onRender @currentActive, @galerySize - 1, @itemsMas
       else
@@ -133,82 +135,39 @@ Holder = (hammer)->
         @arrowRight.removeClass "hide"
 
     handleHammer: (ev) ->
-      ev.gesture.preventDefault()
+      if !@options.mouseEvents && ev.pointerType == "mouse"
+        return false
       switch ev.type
-        when "dragright", "dragleft"
-          @slidersMove @currentLeft + ev.gesture.deltaX
-        when "swipeleft"
-          @next()
-          ev.gesture.stopDetect()
-        when "swiperight"
-          @prev()
-          ev.gesture.stopDetect()
-        when "release"
-          @showPane @detectActiveSlideWithPosition(ev.gesture.deltaX, ev.gesture.deltaTime), true
+        when "panleft", "panright"
+          @slidersMove @currentLeft + ev.deltaX
+        when "panend"
+          @showPane @detectActiveSlideWithPosition(ev.deltaX, ev.deltaTime), true
 
     detectActiveSlideWithPosition: (deltaX, deltaTime) ->
-      return @currentActive  if deltaX is 0
-      mn = 1
-      mn = -1  if deltaX > 0
-      if @options.positionActive is "center" and Math.abs(deltaX) > @itemsMas[@currentActive].width * @options.percentageSwipeElement
-        @detectActiveSlide deltaX + mn * @itemsMas[@currentActive].width / 2, deltaTime
-      else if @options.positionActive is "right"
-        @detectActiveSlide deltaX, deltaTime
-      else
-        @detectActiveSlide deltaX, deltaTime
+#      return @currentActive  if deltaX is 0
+#      mn = 1
+#      mn = -1  if deltaX > 0
+#      if @options.positionActive is "center" and Math.abs(deltaX) > @itemsMas[@currentActive].width * @options.percentageSwipeElement
+#        @detectActiveSlide deltaX + mn * @itemsMas[@currentActive].width / 2
+#      else if @options.positionActive is "right"
+#        @detectActiveSlide deltaX
+#      else
+      @detectActiveSlide deltaX
 
-
-    #if (deltaX<0){
-    #     deltaX = Math.abs(deltaX);
-    #     var active = this.currentActive;
-    #     var ostDelta = deltaX- this.itemsMas[active].width;
-    #     while (ostDelta>0){
-    #     active++;
-    #     if (!this.itemsMas[active]){
-    #     return active-1;
-    #     }
-    #     ostDelta -= this.itemsMas[active].width;
-    #     }
-    #     if (Math.abs(ostDelta)< this.itemsMas[active].width*0.75)
-    #     active++
-    #     return active;
-    #     }else{
-    #     if (this.currentActive != 0){
-    #     var active = this.currentActive-1;
-    #     var ostDelta = deltaX- this.itemsMas[active].width;
-    #     while (ostDelta>0){
-    #     active--;
-    #     if (active <= 0){
-    #     return 0
-    #     }
-    #     ostDelta -= this.itemsMas[active].width;
-    #     }
-    #     if (Math.abs(ostDelta)> this.itemsMas[active].width*0.75)
-    #     active++
-    #     return active;
-    #     }else{
-    #     return 0;
-    #     }
-    #
-    #     }
-    detectActiveSlide: (deltaX, deltaTime) ->
+    detectActiveSlide: (deltaX) ->
       index = @currentActive
       widthElements = 0
-      fastSwipe = 0
-      deltaTime < 300
-
-      #fastSwipe = 1;
       if deltaX > 0
         index--
         while @itemsMas[index] and (deltaX - @itemsMas[index].width * @options.percentageSwipeElement - widthElements) >= 0
           widthElements += @itemsMas[index].width
           index--
-        index + 1 - fastSwipe
+        index + 1
       else
         while @itemsMas[index] and (deltaX + @itemsMas[index].width * @options.percentageSwipeElement + widthElements) <= 0
           widthElements += @itemsMas[index].width
           index++
-        index + fastSwipe
+        index
 
     elementMoveLeft: ->
       lastElement = @itemsMas.pop()
@@ -239,7 +198,6 @@ Holder = (hammer)->
       $.each @itemsMas, (numItem) ->
         if @index is num
           index = numItem
-          0
 
       @showPane index, true
 

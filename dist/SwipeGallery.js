@@ -5,6 +5,7 @@ Holder = function(hammer) {
   var SwipeGallery;
   return SwipeGallery = (function() {
     function SwipeGallery(options) {
+      var hammerManager;
       this.options = $.extend({
         selector: null,
         activeSlide: 0,
@@ -19,7 +20,9 @@ Holder = function(hammer) {
         onChange: function(index, max, itemMas, direction) {},
         onRender: function(index, max, itemMas) {},
         onUpdate: function(index, max, itemMas) {},
-        events: true
+        events: true,
+        mouseEvents: false,
+        fastSwipe: true
       }, options);
       if (this.options.selector && $(this.options.selector).size() !== 0) {
         if (this.options.positionActive === "auto" && this.options.loop) {
@@ -42,9 +45,12 @@ Holder = function(hammer) {
         this.showLoop = this.options.loop;
         this.update();
         if (this.options.events) {
-          new hammer(this.containerContent[0], {
-            drag_lock_to_axis: true
-          }).on("release dragleft dragright swipeleft swiperight", $.proxy(this.handleHammer, this));
+          hammerManager = new hammer.Manager(this.containerContent[0]);
+          hammerManager.add(new hammer.Pan({
+            direction: hammer.DIRECTION_HORIZONTAL,
+            threshold: 0
+          }));
+          hammerManager.on("panleft panright panend", $.proxy(this.handleHammer, this));
         }
         if (this.itemsMas.length > 0) {
           this.itemsMas[this.currentActive].selector.addClass("active");
@@ -161,59 +167,39 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.handleHammer = function(ev) {
-      ev.gesture.preventDefault();
+      if (!this.options.mouseEvents && ev.pointerType === "mouse") {
+        return false;
+      }
       switch (ev.type) {
-        case "dragright":
-        case "dragleft":
-          return this.slidersMove(this.currentLeft + ev.gesture.deltaX);
-        case "swipeleft":
-          this.next();
-          return ev.gesture.stopDetect();
-        case "swiperight":
-          this.prev();
-          return ev.gesture.stopDetect();
-        case "release":
-          return this.showPane(this.detectActiveSlideWithPosition(ev.gesture.deltaX, ev.gesture.deltaTime), true);
+        case "panleft":
+        case "panright":
+          return this.slidersMove(this.currentLeft + ev.deltaX);
+        case "panend":
+          return this.showPane(this.detectActiveSlideWithPosition(ev.deltaX, ev.deltaTime), true);
       }
     };
 
     SwipeGallery.prototype.detectActiveSlideWithPosition = function(deltaX, deltaTime) {
-      var mn;
-      if (deltaX === 0) {
-        return this.currentActive;
-      }
-      mn = 1;
-      if (deltaX > 0) {
-        mn = -1;
-      }
-      if (this.options.positionActive === "center" && Math.abs(deltaX) > this.itemsMas[this.currentActive].width * this.options.percentageSwipeElement) {
-        return this.detectActiveSlide(deltaX + mn * this.itemsMas[this.currentActive].width / 2, deltaTime);
-      } else if (this.options.positionActive === "right") {
-        return this.detectActiveSlide(deltaX, deltaTime);
-      } else {
-        return this.detectActiveSlide(deltaX, deltaTime);
-      }
+      return this.detectActiveSlide(deltaX);
     };
 
-    SwipeGallery.prototype.detectActiveSlide = function(deltaX, deltaTime) {
-      var fastSwipe, index, widthElements;
+    SwipeGallery.prototype.detectActiveSlide = function(deltaX) {
+      var index, widthElements;
       index = this.currentActive;
       widthElements = 0;
-      fastSwipe = 0;
-      deltaTime < 300;
       if (deltaX > 0) {
         index--;
         while (this.itemsMas[index] && (deltaX - this.itemsMas[index].width * this.options.percentageSwipeElement - widthElements) >= 0) {
           widthElements += this.itemsMas[index].width;
           index--;
         }
-        return index + 1 - fastSwipe;
+        return index + 1;
       } else {
         while (this.itemsMas[index] && (deltaX + this.itemsMas[index].width * this.options.percentageSwipeElement + widthElements) <= 0) {
           widthElements += this.itemsMas[index].width;
           index++;
         }
-        return index + fastSwipe;
+        return index;
       }
     };
 
@@ -258,8 +244,7 @@ Holder = function(hammer) {
       index = 0;
       $.each(this.itemsMas, function(numItem) {
         if (this.index === num) {
-          index = numItem;
-          return 0;
+          return index = numItem;
         }
       });
       return this.showPane(index, true);

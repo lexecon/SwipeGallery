@@ -24,6 +24,6 @@
     "tests"
   ],
   "dependencies": {
-    "hammer.js": "1.0.11"
+    "hammer.js": "~2.0.4"
   }
 }
