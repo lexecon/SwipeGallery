@@ -4,11 +4,12 @@ Holder = (hammer)->
       @options = $.extend(
         selector: null #Селектор на блок, в котором находится список
         activeSlide: 0 # Активный слайд
-        countSwitchingSlides: 1 # сколько слайдов прокручивает за одно нажатие мтрелки
+        countSwitchingSlides: 1 # сколько слайдов прокручивает за одно нажатие стрелки
         loop: false # включает зацикливание галлереи
         elementsOnSide: 1 # сколько элементов должно быть по краям от активного (нужно для зацикленной галереи)
         positionActive: "auto" #[left, center, right, auto] какую позицию будет занимать активный элемент
         percentageSwipeElement: 0.3 # Сколько процентов элемента надо проскролить для переключения на него
+        lock: false # блокирует пользовательские действие для галереи
         getHtmlItem: (num) -> #Метод возвращает html код для содержимого контрола, под номером num
           ""
 
@@ -23,7 +24,8 @@ Holder = (hammer)->
         fastSwipe: true #При быстром свайпе увеличивать количество прокручиваемого контента
       , options)
       if @options.selector and $(@options.selector).size() isnt 0
-        @options.positionActive = "left"  if @options.positionActive is "auto" and @options.loop
+        @lockGallery = false
+#        @options.positionActive = "left"  if @options.positionActive is "auto" and @options.loop
         @container = $(@options.selector)
         @containerContent = $(">.ul_overflow", @container)
         @gallery = $(">ul", @containerContent)
@@ -43,13 +45,39 @@ Holder = (hammer)->
         @showLoop = @options.loop
         @update()
         if @options.events
-          hammerManager = new hammer.Manager(@containerContent[0])
-          hammerManager.add( new hammer.Pan({ direction: hammer.DIRECTION_HORIZONTAL, threshold: 0 }) )
-          hammerManager.on("panleft panright panend", $.proxy(@handleHammer, this))
+          @hammerManager = new hammer.Manager(@containerContent[0])
+          @hammerManager.add( new hammer.Pan({ direction: hammer.DIRECTION_HORIZONTAL, threshold: 0 }) )
+          @hammerManager.on("panleft panright panend", $.proxy(@handleHammer, this))
         @itemsMas[@currentActive].selector.addClass "active"  if @itemsMas.length > 0
         @options.onRender @currentActive, @galerySize - 1, @itemsMas
       else
         console.log "SwipeGallery: Селектор не может быть пустым"
+
+
+    updateOptions: (options={})->
+      @options = $.extend @options, options
+#      @options.positionActive = "left"  if @options.positionActive is "auto" and @options.loop
+      if options.activeSlide
+        @currentActive = options.activeSlide
+      @update()
+      if @options.events
+        if @hammerManager
+          @hammerManager.destroy()
+        @hammerManager = new hammer.Manager(@containerContent[0])
+        @hammerManager.add( new hammer.Pan({ direction: hammer.DIRECTION_HORIZONTAL, threshold: 0 }) )
+        @hammerManager.on("panleft panright panend", $.proxy(@handleHammer, this))
+      else
+        if @hammerManager
+          @hammerManager.destroy()
+
+    lock: ->
+      @lockGallery = true
+      @updateControllState()
+      @updateArrow()
+    unLock: ->
+      @lockGallery = false
+      @updateControllState()
+      @updateArrow()
 
     createItemsMas: ->
       obj = this
@@ -81,6 +109,10 @@ Holder = (hammer)->
         @maxLeft = 0 - (@itemsMas[@itemsMas.length - 1].left - @galleryWidth + @itemsMas[@itemsMas.length - 1].width)
 
     updateControllState: ->
+      if @lockGallery
+        @controlsContainer.addClass('lock')
+      else
+        @controlsContainer.removeClass('lock')
       @controlItems.removeClass "active"
       @controlItems.eq(@itemsMas[@currentActive].index).addClass "active"
 
@@ -88,6 +120,8 @@ Holder = (hammer)->
       @container.append "<div class=\"controls_overflow\">                              <div class=\"controls\"></div>                           </div>                           <div class=\"arrow_left\"></div>                           <div class=\"arrow_right\"></div>"
 
     destroy: ->
+      if @hammerManager
+        @hammerManager.destroy()
       $(">.controls_overflow, >.arrow_left, >.arrow_right", @container).remove()
 
     update: (silent) ->
@@ -119,6 +153,12 @@ Holder = (hammer)->
       @options.onUpdate @currentActive, @galerySize - 1, @itemsMas
 
     updateArrow: ->
+      if @lockGallery
+        @arrowLeft.addClass "lock"
+        @arrowRight.addClass "lock"
+      else
+        @arrowLeft.removeClass "lock"
+        @arrowRight.removeClass "lock"
       if @currentActive is 0
         @arrowLeft.addClass "disable"
       else
@@ -152,21 +192,25 @@ Holder = (hammer)->
 #      else if @options.positionActive is "right"
 #        @detectActiveSlide deltaX
 #      else
+
       @detectActiveSlide deltaX
 
     detectActiveSlide: (deltaX) ->
       index = @currentActive
       widthElements = 0
-      if deltaX > 0
-        index--
-        while @itemsMas[index] and (deltaX - @itemsMas[index].width * @options.percentageSwipeElement - widthElements) >= 0
-          widthElements += @itemsMas[index].width
+      if !@lockGallery
+        if deltaX > 0
           index--
-        index + 1
+          while @itemsMas[index] and (deltaX - @itemsMas[index].width * @options.percentageSwipeElement - widthElements) >= 0
+            widthElements += @itemsMas[index].width
+            index--
+          index + 1
+        else
+          while @itemsMas[index] and (deltaX + @itemsMas[index].width * @options.percentageSwipeElement + widthElements) <= 0
+            widthElements += @itemsMas[index].width
+            index++
+          index
       else
-        while @itemsMas[index] and (deltaX + @itemsMas[index].width * @options.percentageSwipeElement + widthElements) <= 0
-          widthElements += @itemsMas[index].width
-          index++
         index
 
     elementMoveLeft: ->
@@ -188,18 +232,21 @@ Holder = (hammer)->
       element.selector.css left: element.left + "px"  if element
 
     next: ->
-      @showPane @currentActive + @options.countSwitchingSlides, true
+      if !@lockGallery
+        @showPane @currentActive + @options.countSwitchingSlides, true
 
     prev: ->
-      @showPane @currentActive - @options.countSwitchingSlides, true
+      if !@lockGallery
+        @showPane @currentActive - @options.countSwitchingSlides, true
 
     goTo: (num) ->
-      index = 0
-      $.each @itemsMas, (numItem) ->
-        if @index is num
-          index = numItem
+      if !@lockGallery
+        index = 0
+        $.each @itemsMas, (numItem) ->
+          if @index is num
+            index = numItem
 
-      @showPane index, true
+        @showPane index, true
 
     showPane: (index, animate) ->
       index = Math.max(0, Math.min(index, @galerySize - 1))

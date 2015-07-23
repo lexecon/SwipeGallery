@@ -88,12 +88,12 @@ h3{
 .gallery3{
     position: relative;
 }
-.gallery3:after{
-    content: " ";
-    position: absolute;
-    background: red;
-    left:50%;
-    top: 0;
-    width: 2px;
-    height: 100%;
-}
+/*.gallery3:after{*/
+    /*content: " ";*/
+    /*position: absolute;*/
+    /*background: red;*/
+    /*left:50%;*/
+    /*top: 0;*/
+    /*width: 2px;*/
+    /*height: 100%;*/
+/*}*/

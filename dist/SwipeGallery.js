@@ -1,11 +1,10 @@
-/*! SwipeGallery 0.5.0 */
+/*! SwipeGallery 1.0.0 */
 var Holder;
 
 Holder = function(hammer) {
   var SwipeGallery;
   return SwipeGallery = (function() {
     function SwipeGallery(options) {
-      var hammerManager;
       this.options = $.extend({
         selector: null,
         activeSlide: 0,
@@ -14,6 +13,7 @@ Holder = function(hammer) {
         elementsOnSide: 1,
         positionActive: "auto",
         percentageSwipeElement: 0.3,
+        lock: false,
         getHtmlItem: function(num) {
           return "";
         },
@@ -25,9 +25,7 @@ Holder = function(hammer) {
         fastSwipe: true
       }, options);
       if (this.options.selector && $(this.options.selector).size() !== 0) {
-        if (this.options.positionActive === "auto" && this.options.loop) {
-          this.options.positionActive = "left";
-        }
+        this.lockGallery = false;
         this.container = $(this.options.selector);
         this.containerContent = $(">.ul_overflow", this.container);
         this.gallery = $(">ul", this.containerContent);
@@ -45,12 +43,12 @@ Holder = function(hammer) {
         this.showLoop = this.options.loop;
         this.update();
         if (this.options.events) {
-          hammerManager = new hammer.Manager(this.containerContent[0]);
-          hammerManager.add(new hammer.Pan({
+          this.hammerManager = new hammer.Manager(this.containerContent[0]);
+          this.hammerManager.add(new hammer.Pan({
             direction: hammer.DIRECTION_HORIZONTAL,
             threshold: 0
           }));
-          hammerManager.on("panleft panright panend", $.proxy(this.handleHammer, this));
+          this.hammerManager.on("panleft panright panend", $.proxy(this.handleHammer, this));
         }
         if (this.itemsMas.length > 0) {
           this.itemsMas[this.currentActive].selector.addClass("active");
@@ -60,6 +58,44 @@ Holder = function(hammer) {
         console.log("SwipeGallery: Селектор не может быть пустым");
       }
     }
+
+    SwipeGallery.prototype.updateOptions = function(options) {
+      if (options == null) {
+        options = {};
+      }
+      this.options = $.extend(this.options, options);
+      if (options.activeSlide) {
+        this.currentActive = options.activeSlide;
+      }
+      this.update();
+      if (this.options.events) {
+        if (this.hammerManager) {
+          this.hammerManager.destroy();
+        }
+        this.hammerManager = new hammer.Manager(this.containerContent[0]);
+        this.hammerManager.add(new hammer.Pan({
+          direction: hammer.DIRECTION_HORIZONTAL,
+          threshold: 0
+        }));
+        return this.hammerManager.on("panleft panright panend", $.proxy(this.handleHammer, this));
+      } else {
+        if (this.hammerManager) {
+          return this.hammerManager.destroy();
+        }
+      }
+    };
+
+    SwipeGallery.prototype.lock = function() {
+      this.lockGallery = true;
+      this.updateControllState();
+      return this.updateArrow();
+    };
+
+    SwipeGallery.prototype.unLock = function() {
+      this.lockGallery = false;
+      this.updateControllState();
+      return this.updateArrow();
+    };
 
     SwipeGallery.prototype.createItemsMas = function() {
       var left, obj;
@@ -101,6 +137,11 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.updateControllState = function() {
+      if (this.lockGallery) {
+        this.controlsContainer.addClass('lock');
+      } else {
+        this.controlsContainer.removeClass('lock');
+      }
       this.controlItems.removeClass("active");
       return this.controlItems.eq(this.itemsMas[this.currentActive].index).addClass("active");
     };
@@ -110,6 +151,9 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.destroy = function() {
+      if (this.hammerManager) {
+        this.hammerManager.destroy();
+      }
       return $(">.controls_overflow, >.arrow_left, >.arrow_right", this.container).remove();
     };
 
@@ -147,6 +191,13 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.updateArrow = function() {
+      if (this.lockGallery) {
+        this.arrowLeft.addClass("lock");
+        this.arrowRight.addClass("lock");
+      } else {
+        this.arrowLeft.removeClass("lock");
+        this.arrowRight.removeClass("lock");
+      }
       if (this.currentActive === 0) {
         this.arrowLeft.addClass("disable");
       } else {
@@ -187,18 +238,22 @@ Holder = function(hammer) {
       var index, widthElements;
       index = this.currentActive;
       widthElements = 0;
-      if (deltaX > 0) {
-        index--;
-        while (this.itemsMas[index] && (deltaX - this.itemsMas[index].width * this.options.percentageSwipeElement - widthElements) >= 0) {
-          widthElements += this.itemsMas[index].width;
+      if (!this.lockGallery) {
+        if (deltaX > 0) {
           index--;
+          while (this.itemsMas[index] && (deltaX - this.itemsMas[index].width * this.options.percentageSwipeElement - widthElements) >= 0) {
+            widthElements += this.itemsMas[index].width;
+            index--;
+          }
+          return index + 1;
+        } else {
+          while (this.itemsMas[index] && (deltaX + this.itemsMas[index].width * this.options.percentageSwipeElement + widthElements) <= 0) {
+            widthElements += this.itemsMas[index].width;
+            index++;
+          }
+          return index;
         }
-        return index + 1;
       } else {
-        while (this.itemsMas[index] && (deltaX + this.itemsMas[index].width * this.options.percentageSwipeElement + widthElements) <= 0) {
-          widthElements += this.itemsMas[index].width;
-          index++;
-        }
         return index;
       }
     };
@@ -232,22 +287,28 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.next = function() {
-      return this.showPane(this.currentActive + this.options.countSwitchingSlides, true);
+      if (!this.lockGallery) {
+        return this.showPane(this.currentActive + this.options.countSwitchingSlides, true);
+      }
     };
 
     SwipeGallery.prototype.prev = function() {
-      return this.showPane(this.currentActive - this.options.countSwitchingSlides, true);
+      if (!this.lockGallery) {
+        return this.showPane(this.currentActive - this.options.countSwitchingSlides, true);
+      }
     };
 
     SwipeGallery.prototype.goTo = function(num) {
       var index;
-      index = 0;
-      $.each(this.itemsMas, function(numItem) {
-        if (this.index === num) {
-          return index = numItem;
-        }
-      });
-      return this.showPane(index, true);
+      if (!this.lockGallery) {
+        index = 0;
+        $.each(this.itemsMas, function(numItem) {
+          if (this.index === num) {
+            return index = numItem;
+          }
+        });
+        return this.showPane(index, true);
+      }
     };
 
     SwipeGallery.prototype.showPane = function(index, animate) {
