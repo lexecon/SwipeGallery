@@ -1,10 +1,11 @@
-/*! SwipeGallery 1.0.0 */
+/*! SwipeGallery 1.1.1 */
 var Holder;
 
 Holder = function(hammer) {
   var SwipeGallery;
   return SwipeGallery = (function() {
     function SwipeGallery(options) {
+      var vendors, x;
       this.options = $.extend({
         selector: null,
         activeSlide: 0,
@@ -24,6 +25,25 @@ Holder = function(hammer) {
         mouseEvents: false,
         fastSwipe: true
       }, options);
+      vendors = ['ms', 'moz', 'webkit', 'o'];
+      x = 0;
+      while (x < vendors.length && !window.requestAnimationFrame) {
+        window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+        ++x;
+      }
+      if (!window.requestAnimationFrame) {
+        this.requestAnimationFrame = function(func) {
+          return func();
+        };
+      } else {
+        this.requestAnimationFrame = $.proxy(window.requestAnimationFrame, window);
+      }
+      if (!window.cancelAnimationFrame) {
+        this.cancelAnimationFrame = function() {};
+      } else {
+        this.cancelAnimationFrame = $.proxy(window.cancelAnimationFrame, window);
+      }
       if (this.options.selector && $(this.options.selector).size() !== 0) {
         this.lockGallery = false;
         this.container = $(this.options.selector);
@@ -34,13 +54,30 @@ Holder = function(hammer) {
         this.arrowLeft = $(">.arrow_left", this.container);
         this.arrowRight = $(">.arrow_right", this.container);
         this.controlsContainer = $(">.controls_overflow .controls", this.container);
+        this.requestAnimationId = 1;
+        this.startPx = 0;
+        this.endPx = 0;
         this.currentActive = this.options.activeSlide;
         this.currentLeft = 0;
         this.controlItems = null;
         this.galerySize = 0;
         this.galleryWidth = 0;
-        this.transform3d = this.has3d();
         this.showLoop = this.options.loop;
+        if (this.has3d()) {
+          this.styleLeft = (function(_this) {
+            return function(px) {
+              return _this.gallery.css("transform", "translate3d(" + px + "px,0,0)");
+            };
+          })(this);
+        } else {
+          this.styleLeft = (function(_this) {
+            return function(px) {
+              return _this.gallery.css({
+                left: px + "px"
+              });
+            };
+          })(this);
+        }
         this.update();
         if (this.options.events) {
           this.hammerManager = new hammer.Manager(this.containerContent[0]);
@@ -48,7 +85,7 @@ Holder = function(hammer) {
             direction: hammer.DIRECTION_HORIZONTAL,
             threshold: 0
           }));
-          this.hammerManager.on("panleft panright panend", $.proxy(this.handleHammer, this));
+          this.hammerManager.on("panstart panleft panright panend pancancel", $.proxy(this.handleHammer, this));
         }
         if (this.itemsMas.length > 0) {
           this.itemsMas[this.currentActive].selector.addClass("active");
@@ -77,7 +114,7 @@ Holder = function(hammer) {
           direction: hammer.DIRECTION_HORIZONTAL,
           threshold: 0
         }));
-        return this.hammerManager.on("panleft panright panend", $.proxy(this.handleHammer, this));
+        return this.hammerManager.on("panstart panleft panright panend pancancel", $.proxy(this.handleHammer, this));
       } else {
         if (this.hammerManager) {
           return this.hammerManager.destroy();
@@ -218,15 +255,23 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.handleHammer = function(ev) {
+      var velosity;
       if (!this.options.mouseEvents && ev.pointerType === "mouse") {
         return false;
       }
       switch (ev.type) {
-        case "panleft":
-        case "panright":
-          return this.slidersMove(this.currentLeft + ev.deltaX);
-        case "panend":
-          return this.showPane(this.detectActiveSlideWithPosition(ev.deltaX, ev.deltaTime), true);
+        case 'panstart':
+          return this.gallery.removeClass("animate");
+        case 'panleft':
+        case 'panright':
+          return this.sliderMoveFast(this.currentLeft + ev.deltaX);
+        case 'panend':
+        case 'pancancel':
+          velosity = Math.abs(ev.velocityX);
+          if (velosity < 1) {
+            velosity = 1;
+          }
+          return this.showPane(this.detectActiveSlideWithPosition(ev.deltaX * velosity, ev.deltaTime), true);
       }
     };
 
@@ -375,16 +420,28 @@ Holder = function(hammer) {
     };
 
     SwipeGallery.prototype.slidersMove = function(px, animate) {
+      this.cancelAnimationFrame(this.requestAnimationId);
       if (animate) {
         this.gallery.addClass("animate");
       } else {
         this.gallery.removeClass("animate");
       }
       this.gallery.width();
-      if (this.transform3d) {
-        return this.gallery.css("transform", "translate3d(" + px + "px,0,0)");
-      } else {
-        return this.gallery.css("left", px + "px");
+      return this.styleLeft(px);
+    };
+
+    SwipeGallery.prototype.sliderMoveFast = function(px) {
+      this.cancelAnimationFrame(this.requestAnimationId);
+      this.startPx = this.currentLeft;
+      this.endPx = px;
+      return this.requestAnimationId = this.requestAnimationFrame($.proxy(this.moveRequestAnimation, this));
+    };
+
+    SwipeGallery.prototype.moveRequestAnimation = function(currentPx, endPx) {
+      if (this.startPx !== this.endPx) {
+        this.styleLeft(this.endPx);
+        this.startPx = this.endPx;
+        return this.requestAnimationId = this.requestAnimationFrame($.proxy(this.moveRequestAnimation, this));
       }
     };
 
@@ -424,3 +481,80 @@ if ((typeof define === 'function') && (typeof define.amd === 'object') && define
 } else {
   window.SwipeGallery = Holder(Hammer);
 }
+
+window.test = function() {
+  var DEFAULT_DURATION, solveEpsilon, unitBezier;
+  DEFAULT_DURATION = 400;
+  solveEpsilon = function(duration) {
+    return 1.0 / (200.0 * duration);
+  };
+  return unitBezier = function(p1x, p1y, p2x, p2y) {
+    var ax, ay, bx, cx, cy, ry, sampleCurveDerivativeX, sampleCurveX, sampleCurveY, solve, solveCurveX;
+    cx = 3.0 * p1x;
+    bx = 3.0 * (p2x - p1x) - cx;
+    ax = 1.0 - cx - bx;
+    cy = 3.0 * p1y;
+    ry = 3.0 * (p2y - p1y) - cy;
+    ay = 1.0 - cy - ry;
+    sampleCurveX = function(t) {
+      return ((ax * t + bx) * t + cx) * t;
+    };
+    sampleCurveY = function(t) {
+      return ((ay * t + ry) * t + cy) * t;
+    };
+    sampleCurveDerivativeX = function(t) {
+      return (3.0 * ax * t + 2.0 * bx) * t + cx;
+    };
+    solveCurveX = function(x, epsilon) {
+      var d2, i, t0, t1, t2, x2;
+      t0 = void 0;
+      t1 = void 0;
+      t2 = void 0;
+      x2 = void 0;
+      d2 = void 0;
+      i = void 0;
+      t2 = x;
+      i = 0;
+      while (i < 8) {
+        x2 = sampleCurveX(t2) - x;
+        if (Math.abs(x2) < epsilon) {
+          return t2;
+        }
+        d2 = sampleCurveDerivativeX(t2);
+        if (Math.abs(d2) < 1e-6) {
+          break;
+        }
+        t2 = t2 - (x2 / d2);
+        i++;
+      }
+      t0 = 0.0;
+      t1 = 1.0;
+      t2 = x;
+      if (t2 < t0) {
+        return t0;
+      }
+      if (t2 > t1) {
+        return t1;
+      }
+      while (t0 < t1) {
+        x2 = sampleCurveX(t2);
+        if (Math.abs(x2 - x) < epsilon) {
+          return t2;
+        }
+        if (x > x2) {
+          t0 = t2;
+        } else {
+          t1 = t2;
+        }
+        t2 = (t1 - t0) * 0.5 + t0;
+      }
+      return t2;
+    };
+    solve = function(x, epsilon) {
+      return sampleCurveY(solveCurveX(x, epsilon));
+    };
+    return function(x, duration) {
+      return solve(x, solveEpsilon(+duration || DEFAULT_DURATION));
+    };
+  };
+};

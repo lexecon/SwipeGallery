@@ -3,11 +3,11 @@ $(document).ready(function(){
   CenterActiveLoopGallery = new SwipeGallery({selector: $('.center_active_loop'), loop: true, mouseEvents: true})
   window.gallery3 = new SwipeGallery({
     selector: $('.gallery3'),
-    loop: false,
+    loop: true,
     positionActive: 'auto',
-    elementsOnSide:4 ,
+    elementsOnSide:3 ,
     mouseEvents: true,
-    percentageSwipeElement: 0.8
+    //percentageSwipeElement: 0.8
   })
 
 })

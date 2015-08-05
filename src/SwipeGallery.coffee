@@ -23,6 +23,29 @@ Holder = (hammer)->
 
         fastSwipe: true #При быстром свайпе увеличивать количество прокручиваемого контента
       , options)
+
+      vendors = [
+        'ms'
+        'moz'
+        'webkit'
+        'o'
+      ]
+      x = 0
+      while x < vendors.length and !window.requestAnimationFrame
+        window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame']
+        window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] or window[vendors[x] + 'CancelRequestAnimationFrame']
+        ++x
+      if !window.requestAnimationFrame
+        @requestAnimationFrame = (func)->
+          func()
+      else
+        @requestAnimationFrame = $.proxy(window.requestAnimationFrame, window)
+
+      if !window.cancelAnimationFrame
+        @cancelAnimationFrame = ->
+      else
+        @cancelAnimationFrame = $.proxy(window.cancelAnimationFrame, window)
+
       if @options.selector and $(@options.selector).size() isnt 0
         @lockGallery = false
 #        @options.positionActive = "left"  if @options.positionActive is "auto" and @options.loop
@@ -36,18 +59,26 @@ Holder = (hammer)->
         @arrowLeft = $(">.arrow_left", @container)
         @arrowRight = $(">.arrow_right", @container)
         @controlsContainer = $(">.controls_overflow .controls", @container)
+        @requestAnimationId = 1
+        @startPx = 0
+        @endPx = 0
         @currentActive = @options.activeSlide
         @currentLeft = 0
         @controlItems = null
         @galerySize = 0
         @galleryWidth = 0
-        @transform3d = @has3d()
         @showLoop = @options.loop
+        if @has3d()
+          @styleLeft = (px)=>
+            @gallery.css "transform", "translate3d(#{px}px,0,0)"
+        else
+          @styleLeft = (px)=>
+            @gallery.css {left: "#{px}px"}
         @update()
         if @options.events
           @hammerManager = new hammer.Manager(@containerContent[0])
           @hammerManager.add( new hammer.Pan({ direction: hammer.DIRECTION_HORIZONTAL, threshold: 0 }) )
-          @hammerManager.on("panleft panright panend", $.proxy(@handleHammer, this))
+          @hammerManager.on("panstart panleft panright panend pancancel", $.proxy(@handleHammer, this))
         @itemsMas[@currentActive].selector.addClass "active"  if @itemsMas.length > 0
         @options.onRender @currentActive, @galerySize - 1, @itemsMas
       else
@@ -65,7 +96,7 @@ Holder = (hammer)->
           @hammerManager.destroy()
         @hammerManager = new hammer.Manager(@containerContent[0])
         @hammerManager.add( new hammer.Pan({ direction: hammer.DIRECTION_HORIZONTAL, threshold: 0 }) )
-        @hammerManager.on("panleft panright panend", $.proxy(@handleHammer, this))
+        @hammerManager.on("panstart panleft panright panend pancancel", $.proxy(@handleHammer, this))
       else
         if @hammerManager
           @hammerManager.destroy()
@@ -178,10 +209,16 @@ Holder = (hammer)->
       if !@options.mouseEvents && ev.pointerType == "mouse"
         return false
       switch ev.type
-        when "panleft", "panright"
-          @slidersMove @currentLeft + ev.deltaX
-        when "panend"
-          @showPane @detectActiveSlideWithPosition(ev.deltaX, ev.deltaTime), true
+        when 'panstart'
+          @gallery.removeClass "animate"
+        when 'panleft', 'panright'
+          @sliderMoveFast @currentLeft + ev.deltaX
+        when 'panend', 'pancancel'
+#          console.log ev.velocityX
+          velosity = Math.abs(ev.velocityX)
+          if velosity < 1
+            velosity = 1
+          @showPane @detectActiveSlideWithPosition(ev.deltaX*velosity, ev.deltaTime), true
 
     detectActiveSlideWithPosition: (deltaX, deltaTime) ->
 #      return @currentActive  if deltaX is 0
@@ -296,15 +333,26 @@ Holder = (hammer)->
           i--
 
     slidersMove: (px, animate) -> #Перемещает портянку со слайдами влево на указанное количество пикселей
+      @cancelAnimationFrame @requestAnimationId
       if animate
         @gallery.addClass "animate"
       else
         @gallery.removeClass "animate"
       @gallery.width() # Для принудительной перерисовки
-      if @transform3d
-        @gallery.css "transform", "translate3d(" + px + "px,0,0)"
-      else
-        @gallery.css "left", px + "px"
+      @styleLeft px
+
+    sliderMoveFast: (px)->
+      @cancelAnimationFrame @requestAnimationId
+      @startPx = @currentLeft
+      @endPx = px
+      @requestAnimationId = @requestAnimationFrame $.proxy(@moveRequestAnimation, this)
+
+    moveRequestAnimation: (currentPx, endPx)->
+      if @startPx != @endPx
+        @styleLeft @endPx
+        @startPx = @endPx
+        @requestAnimationId = @requestAnimationFrame $.proxy(@moveRequestAnimation, this)
+
 
     has3d: ->
       el = document.createElement("p")
@@ -333,3 +381,70 @@ if (typeof define is 'function') and (typeof define.amd is 'object') and define.
     Holder(Hammer)
 else
   window.SwipeGallery = Holder(Hammer)
+
+
+
+
+window.test = ()->
+  DEFAULT_DURATION = 400
+
+  solveEpsilon = (duration) ->
+    1.0 / (200.0 * duration)
+
+  unitBezier = (p1x, p1y, p2x, p2y) ->
+    cx = 3.0 * p1x
+    bx = 3.0 * (p2x - p1x) - cx
+    ax = 1.0 - cx - bx
+    cy = 3.0 * p1y
+    ry = 3.0 * (p2y - p1y) - cy
+    ay = 1.0 - cy - ry
+    sampleCurveX = (t) ->
+      ((ax * t + bx) * t + cx) * t
+    sampleCurveY = (t) ->
+      ((ay * t + ry) * t + cy) * t
+    sampleCurveDerivativeX = (t) ->
+      (3.0 * ax * t + 2.0 * bx) * t + cx
+    solveCurveX = (x, epsilon) ->
+      t0 = undefined
+      t1 = undefined
+      t2 = undefined
+      x2 = undefined
+      d2 = undefined
+      i = undefined
+      # First try a few iterations of Newton's method -- normally very fast.
+      t2 = x
+      i = 0
+      while i < 8
+        x2 = sampleCurveX(t2) - x
+        if Math.abs(x2) < epsilon
+          return t2
+        d2 = sampleCurveDerivativeX(t2)
+        if Math.abs(d2) < 1e-6
+          break
+        t2 = t2 - (x2 / d2)
+        i++
+      # Fall back to the bisection method for reliability.
+      t0 = 0.0
+      t1 = 1.0
+      t2 = x
+      if t2 < t0
+        return t0
+      if t2 > t1
+        return t1
+      while t0 < t1
+        x2 = sampleCurveX(t2)
+        if Math.abs(x2 - x) < epsilon
+          return t2
+        if x > x2
+          t0 = t2
+        else
+          t1 = t2
+        t2 = (t1 - t0) * 0.5 + t0
+      # Failure.
+      t2
+
+    solve = (x, epsilon) ->
+      sampleCurveY solveCurveX(x, epsilon)
+
+    (x, duration) ->
+      solve x, solveEpsilon(+duration or DEFAULT_DURATION)
