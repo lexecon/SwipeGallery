@@ -10,7 +10,7 @@ banner = "/*! #{ pkg.name } #{ pkg.version } */\n"
 gulp.task 'coffee', ->
   try
     gulp.src('./src/*')
-    .pipe(coffee({bare:true})
+    .pipe(coffee()
       .on('error', gutil.log))
     .pipe(header(banner))
     .pipe(gulp.dest('./dist/'))
