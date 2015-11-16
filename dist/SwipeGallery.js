@@ -166,7 +166,7 @@
         this.galleryWidth = this.containerContent.width();
         if (this.options.positionActive === "auto") {
           if (this.galleryWidth >= commonWidth) {
-            this.centerLeft = this.galleryWidth / 2 - commonWidth / 2;
+            this.centerLeft = parseInt(this.galleryWidth / 2 - commonWidth / 2, 10);
           } else {
             this.centerLeft = 0;
           }

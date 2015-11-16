@@ -134,7 +134,7 @@ Holder = (hammer)->
       @galleryWidth = @containerContent.width()
       if @options.positionActive is "auto"
         if @galleryWidth >= commonWidth
-          @centerLeft = @galleryWidth / 2 - commonWidth / 2
+          @centerLeft = parseInt(@galleryWidth / 2 - commonWidth / 2, 10)
         else
           @centerLeft = 0
         @maxLeft = 0 - (@itemsMas[@itemsMas.length - 1].left - @galleryWidth + @itemsMas[@itemsMas.length - 1].width)
